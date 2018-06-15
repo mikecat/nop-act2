@@ -1,0 +1,7 @@
+objs-native
+objs-jos
+.objs-native-exists
+.objs-jos-exists
+.native-built
+.jos-built
+bootia32.efi

@@ -1,7 +1,17 @@
+#include "serial.h"
+
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
-	for (;;);
+	const char* str = "hello, world\r\n";
 	/* avoid unused warnings */
 	(void)arg1;
 	(void)marker;
+
+	serial_init();
+	while (*str != '\0') {
+		serial_write(*(str++));
+	}
+	while (serial_read() != 'q');
+
+	return 0;
 }

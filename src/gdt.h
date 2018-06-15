@@ -3,4 +3,9 @@
 
 void gdt_init(void);
 
+#define SEGMENT_CODE_0 0x08
+#define SEGMENT_DATA_0 0x10
+#define SEGMENT_CODE_3 0x18
+#define SEGMENT_DATA_3 0x20
+
 #endif

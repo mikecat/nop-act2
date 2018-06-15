@@ -4,7 +4,7 @@ COMMON_LDFLAGS=
 NATIVE_GCC=gcc
 NATIVE_CFLAGS=
 NATIVE_LD=ld
-NATIVE_LDFLAGS=--subsystem 10
+NATIVE_LDFLAGS=--subsystem 10 -e __start
 
 JOS_GCC=i386-jos-elf-gcc
 JOS_CFLAGS=
@@ -16,7 +16,7 @@ JOS_OBJDIR=objs-jos
 
 SRCDIR=src
 
-OBJS=start.o serial.o gdt.o
+OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o
 
 TARGET=bootia32.efi
 

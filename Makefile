@@ -16,7 +16,7 @@ JOS_OBJDIR=objs-jos
 
 SRCDIR=src
 
-OBJS=start.o serial.o
+OBJS=start.o serial.o gdt.o
 
 TARGET=bootia32.efi
 
@@ -48,6 +48,18 @@ $(NATIVE_OBJDIR)/%.o: $(SRCDIR)/%.c .$(NATIVE_OBJDIR)-exists
 	$(NATIVE_GCC) $(COMMON_CFLAGS) $(NATIVE_CFLAGS) -c -o $@ $<
 
 $(JOS_OBJDIR)/%.o: $(SRCDIR)/%.c .$(JOS_OBJDIR)-exists
+	$(JOS_GCC) $(COMMON_CFLAGS) $(JOS_CFLAGS) -c -o $@ $<
+
+$(NATIVE_OBJDIR)/%.o: $(SRCDIR)/%.s .$(NATIVE_OBJDIR)-exists
+	$(NATIVE_GCC) $(COMMON_CFLAGS) $(NATIVE_CFLAGS) -c -o $@ $<
+
+$(JOS_OBJDIR)/%.o: $(SRCDIR)/%.s .$(JOS_OBJDIR)-exists
+	$(JOS_GCC) $(COMMON_CFLAGS) $(JOS_CFLAGS) -c -o $@ $<
+
+$(NATIVE_OBJDIR)/%.o: $(SRCDIR)/%.S .$(NATIVE_OBJDIR)-exists
+	$(NATIVE_GCC) $(COMMON_CFLAGS) $(NATIVE_CFLAGS) -c -o $@ $<
+
+$(JOS_OBJDIR)/%.o: $(SRCDIR)/%.S .$(JOS_OBJDIR)-exists
 	$(JOS_GCC) $(COMMON_CFLAGS) $(JOS_CFLAGS) -c -o $@ $<
 
 .$(NATIVE_OBJDIR)-exists:

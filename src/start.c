@@ -1,3 +1,4 @@
+#include "gdt.h"
 #include "serial.h"
 
 int _start(void* arg1) {
@@ -7,6 +8,7 @@ int _start(void* arg1) {
 	(void)arg1;
 	(void)marker;
 
+	gdt_init();
 	serial_init();
 	while (*str != '\0') {
 		serial_write(*(str++));

@@ -4,4 +4,9 @@
 void interrupts_init(void);
 void set_interrupt_handler(void (*handler)(int iid, int ecode));
 
+/* bit 0 = IRQ0, ..., bit 15 = IRQ15 */
+/* each bit : 0 = disable interrupt, 1 = enable interrupt */
+void set_irq_enable(int enable);
+int get_irq_enabled(void);
+
 #endif

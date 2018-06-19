@@ -16,7 +16,8 @@ JOS_OBJDIR=objs-jos
 
 SRCDIR=src
 
-OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o
+OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o \
+	display.o
 
 TARGET=bootia32.efi
 

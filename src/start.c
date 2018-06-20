@@ -2,6 +2,7 @@
 #include "interrupts.h"
 #include "serial.h"
 #include "display.h"
+#include "io.h"
 
 void ihandler(int iid, int ecode) {
 	static const char digits[] = "0123456789ABCDEF";
@@ -32,9 +33,13 @@ int _start(void* arg1) {
 	display_init();
 	serial_init();
 
+	io_out16(0x03c4, 0x0204);
+	io_out16(0x03ce, 0x1305);
+	io_out16(0x03ce, 0x0e06);
 	for (i = 0; gstr[i] != '\0'; i++) {
-		vram[i] = gstr[i];
+		vram[i * 2] = gstr[i];
 	}
+	for(i=800;i<0x8000;i+=801)vram[i * 2] = '0';
 
 	while (*str != '\0') {
 		serial_write(*(str++));

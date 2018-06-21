@@ -46,7 +46,9 @@ irand_caller:
 .section .data
 
 .globl _interrupts_land_table
+.globl interrupts_land_table /* for some environments */
 _interrupts_land_table:
+interrupts_land_table: /* for some environments */
 
 #define TABLE(two, one) .long irand_ ## two ## one ;
 

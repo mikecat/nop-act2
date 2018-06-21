@@ -76,3 +76,8 @@ void c_base_interrupt_handler(int iid, int ecode) {
 		io_out8(0xa0, 0x20);
 	}
 }
+
+/* for some environments */
+void _c_base_interrupt_handler(int iid, int ecode) {
+	c_base_interrupt_handler(iid, ecode);
+}

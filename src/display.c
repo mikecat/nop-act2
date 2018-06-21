@@ -116,7 +116,7 @@ void display_init(void) {
 	/* End Vertical Blanking */
 	crt_write(0x16, ver_end_blank & 0xff);
 	/* CRT Mode Control */
-	crt_write(0x17, 0xe3);
+	crt_write(0x17, 0xa3);
 	/* Line Compare Register */
 	crt_write(0x18, 0xff);
 

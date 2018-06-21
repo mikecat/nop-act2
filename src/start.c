@@ -39,7 +39,11 @@ int _start(void* arg1) {
 	for (i = 0; gstr[i] != '\0'; i++) {
 		vram[i * 2] = gstr[i];
 	}
+#if 0
 	for(i=800;i<0x8000;i+=801)vram[i * 2] = '0';
+#else
+	for(i=80;i<0x8000;i+=81)vram[i * 2] = '0';
+#endif
 
 	while (*str != '\0') {
 		serial_write(*(str++));

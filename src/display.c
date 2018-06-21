@@ -36,6 +36,9 @@ void display_init(void) {
 
 	__asm__ __volatile("cli\n\t");
 
+	/* magic for have VirtualBox disable VBE and work properly */
+	/* reference: https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Devices/Graphics/DevVGA.cpp */
+	io_out16(0x03c4, 0x0007);
 	/* sequencer reset */
 	io_out16(0x03c4, 0x0000);
 	io_out16(0x03c4, 0x0100);

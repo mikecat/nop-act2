@@ -4,7 +4,15 @@
 .global vbe_entry
 _vbe_entry:
 vbe_entry:
+	cli
 	lidt idt_data
+	/* put callee-save registers */
+	mov %ebx, 0x9000
+	mov %esi, 0x9004
+	mov %edi, 0x9008
+	mov %esp, 0x900c
+	mov %ebp, 0x9010
+	/* switch to 16bit */
 	ljmp $0x28, $vbe_16bit
 
 .code16
@@ -46,13 +54,38 @@ vbe_code:
 	mov $0x4f00, %ax
 	mov $0x2000, %di
 	int $0x10
-	cli
-halt_loop:
-	jmp halt_loop
+	cmp $0x004f, %ax
+	jne ng
+	mov $1, %ax
+	jmp goback
 ng:
-	mov $0xDEAD, %ax
-	cli
-	jmp halt_loop
+	xor %ax, %ax
+goback:
+	/* go back to protected 32-bit mode */
+	mov %cr0, %ecx
+	or $0x00000001, %ecx
+	mov %ecx, %cr0
+	ljmp $0x08, $(vbe_protected - vbe_code + 0x1000)
+
+.code32
+vbe_protected:
+	/* restore segment registers */
+	mov $0x10, %cx
+	mov %cx, %ds
+	mov %cx, %es
+	mov %cx, %ss
+	mov %cx, %fs
+	mov %cx, %gs
+	/* restore callee-save registers */
+	mov 0x9000, %ebx
+	mov 0x9004, %esi
+	mov 0x9008, %edi
+	mov 0x900c, %esp
+	mov 0x9010, %ebp
+	/* return */
+	movzx %ax, %eax
+	ret
+
 vbe_code_end:
 
 .balign 4

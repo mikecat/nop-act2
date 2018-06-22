@@ -23,23 +23,35 @@ vbe_16bit:
 .section .data
 
 idt_data:
-	.long 0
 	.short 0x400
+	.long 0
 
 .global _vbe_code
 .global vbe_code
 _vbe_code:
 vbe_code:
 	mov $0x0000, %ax
-	mov %ax, %ds
 	mov %ax, %es
 	mov %ax, %ss
 	mov $0x3000, %sp
+	/* BIOS init (reference: https://github.com/qemu/vgabios/blob/master/vgabios.c ) */
+	mov $0xc000, %ax
+	mov %ax, %ds
+	cmpw $0xaa55, 0x0
+	jne ng
+	lcall $0xc000, $0x0003
+
+	mov $0x0000, %ax
+	mov %ax, %ds
 	mov $0x4f00, %ax
 	mov $0x2000, %di
 	int $0x10
 	cli
 halt_loop:
+	jmp halt_loop
+ng:
+	mov $0xDEAD, %ax
+	cli
 	jmp halt_loop
 vbe_code_end:
 

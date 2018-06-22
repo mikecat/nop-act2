@@ -56,6 +56,8 @@ vbe_code:
 	int $0x10
 	cmp $0x004f, %ax
 	jne ng
+	testb $0x02, 0x200a
+	jnz ng /* not VGA compatible */
 	mov $1, %ax
 	jmp goback
 ng:

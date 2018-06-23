@@ -58,13 +58,11 @@ for (my $i = 0; $i < 256; $i++) {
 		$i == 0 ? "   " : "", $i, 0x20 <= $i && $i < 0x7f ? $i : 0x20);
 	for (my $j = 0; $j < $block_height; $j++) {
 		my $c = 0;
-		print "----- $i $j\n";
 		for (my $k = 0; $k < $block_width; $k++) {
 			my $y = $img_height - 1 - (($i >> 4) + $top_header_block) * $block_height - $j;
 			my $x = ($i % 16 + $left_header_block) * $block_width + ($block_width - 1 - $k);
 			my ($b, $g, $r) = unpack("CCC", substr($img, $img_offset + $y * $img_byte_width + $x * 3, 3));
 			if ($r < 128 && $g < 128 && $b < 128) { $c |= (1 << $k); }
-			print "$k $x $y\n";
 		}
 
 		if ($j % 8 == 0) {

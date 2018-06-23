@@ -1,5 +1,6 @@
 #include "display.h"
 #include "io.h"
+#include "font.h"
 
 static inline void crt_write(int index, int data) {
 	io_out16(0x03d4, ((data & 0xff) << 8) | (index & 0xff));
@@ -194,7 +195,7 @@ void display_init(void) {
 		for (i = 0; i < 0x100; i++) {
 			int j;
 			for (j = 0; j < 32; j++) {
-				vram[i * 32 + j] = (j < 16 ? ((i >> j) & 1 ? 0xfe : 0x00) : 0);
+				vram[i * 32 + j] = (j < FONT_HEIGHT ? font_data[i][j] : 0);
 			}
 		}
 		/* set attribute */

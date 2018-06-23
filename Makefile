@@ -17,7 +17,7 @@ JOS_OBJDIR=objs-jos
 SRCDIR=src
 
 OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o \
-	display.o
+	display.o font.o
 
 TARGET=bootia32.efi
 
@@ -70,6 +70,9 @@ $(JOS_OBJDIR)/%.o: $(SRCDIR)/%.S .$(JOS_OBJDIR)-exists
 .$(JOS_OBJDIR)-exists:
 	mkdir -p $(JOS_OBJDIR)
 	@touch $@
+
+src/font.c: font.bmp font_img2src.pl
+	perl font_img2src.pl $< $@
 
 .PHONY: clean
 clean:

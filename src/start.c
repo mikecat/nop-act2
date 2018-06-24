@@ -53,16 +53,6 @@ int _start(void* arg1) {
 	for(i=80;i<0x8000;i+=81)vram[i * 2] = '0';
 #endif
 
-	for (i = 0xc0000; i < 0x100000; i++) {
-		if (*(unsigned int*)i == 0x504d4944
-		|| *(unsigned int*)i == 0x44494d50) {
-			__asm__ __volatile__(
-				"mov %0, %%eax\n\t"
-			: : "m"(i));
-			for(;;);
-		}
-	}
-
 	while (*str != '\0') {
 		serial_write(*(str++));
 	}

@@ -5,4 +5,4 @@ objs-jos
 .native-built
 .jos-built
 bootia32.efi
-src/font.c
+font.c

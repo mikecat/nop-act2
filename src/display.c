@@ -1,6 +1,7 @@
 #include "display.h"
 #include "io.h"
 #include "font.h"
+#include "display_vbe.h"
 
 static int vbe_init(void) {
 	extern int vbe_entry(void);
@@ -45,10 +46,17 @@ void display_init(void) {
 	const int ver_start_blank = v_display + v_blank0;
 	const int ver_end_blank = v_blank1 + v_sync + v_blank2 - 1;
 
+	int vbe_result;
+
 	__asm__ __volatile("cli\n\t");
 
-	/* disable VBE b y calling BIOS initialization and have VGA registers work properly */
-	if (!vbe_init()) {
+	/* disable VBE by calling BIOS initialization and have VGA registers work properly */
+	vbe_result = vbe_init();
+	if (vbe_result == VBE_NOT_VGA_COMPATIBLE) {
+		/* give up */
+		return;
+	}
+	if (vbe_result != VBE_SUCCESS) {
 		/* failed, fallback */
 
 		/* disable VBE for QEMU */

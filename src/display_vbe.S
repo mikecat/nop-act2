@@ -1,3 +1,5 @@
+#include "display_vbe.h"
+
 .section text
 
 .global _vbe_entry
@@ -46,7 +48,7 @@ vbe_code:
 	mov $0xc000, %ax
 	mov %ax, %ds
 	cmpw $0xaa55, 0x0
-	jne ng
+	jne bios_not_detected
 	lcall $0xc000, $0x0003
 
 	mov $0x0000, %ax
@@ -55,13 +57,19 @@ vbe_code:
 	mov $0x2000, %di
 	int $0x10
 	cmp $0x004f, %ax
-	jne ng
+	jne vbe_not_supported
 	testb $0x02, 0x200a
-	jnz ng /* not VGA compatible */
-	mov $1, %ax
+	jnz not_vga_compatible
+	mov $(VBE_SUCCESS), %ax
 	jmp goback
-ng:
-	xor %ax, %ax
+bios_not_detected:
+	mov $(VBE_BIOS_NOT_DETECTED), %ax
+	jmp goback
+vbe_not_supported:
+	mov $(VBE_NOT_SUPPORTED), %ax
+	jmp goback
+not_vga_compatible:
+	mov $(VBE_NOT_VGA_COMPATIBLE), %ax
 goback:
 	/* go back to protected 32-bit mode */
 	mov %cr0, %ecx

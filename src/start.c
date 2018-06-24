@@ -2,7 +2,6 @@
 #include "interrupts.h"
 #include "serial.h"
 #include "display.h"
-#include "io.h"
 
 int vbe_test(void) {
 	extern int vbe_entry(void);
@@ -45,9 +44,6 @@ int _start(void* arg1) {
 	display_init();
 	serial_init();
 
-	io_out16(0x03c4, 0x0204);
-	io_out16(0x03ce, 0x1305);
-	io_out16(0x03ce, 0x0e06);
 	for (i = 0; gstr[i] != '\0'; i++) {
 		vram[i * 2] = gstr[i];
 	}

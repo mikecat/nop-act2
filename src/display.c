@@ -205,6 +205,12 @@ void display_init(void) {
 		io_out16(0x03c4, 0x0102);
 		for (i = 0; i < 0x8000; i++) vram[i] = 0x00;
 	}
+	/* select character and attribute plane */
+	io_out16(0x03c4, 0x0302);
+	/* select even/odd addressing */
+	io_out16(0x03c4, 0x0204);
+	io_out16(0x03ce, 0x1305);
+	io_out16(0x03ce, 0x0e06);
 
 	__asm__ __volatile("sti\n\t");
 }

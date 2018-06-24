@@ -30,7 +30,21 @@ unsigned char gdt[] = {
 	0x00, /* Base Address Mid */
 	0xf2, /* P=1, DPL=3, S=1, Type={Data, Up, Read/Write, Not accessed} */
 	0xcf, /* G=1, D/B=1, AVL=0, Segment Limit High=0xf */
-	0x00  /* Base Address Hi */
+	0x00, /* Base Address Hi */
+	/* 28 : ring 0 code (16bit) */
+	0xff, 0xff, /* Segment Limit Low */
+	0x00, 0x00, /* Base Address Low */
+	0x00, /* Base Address Mid */
+	0x9a, /* P=1, DPL=0, S=1, Type={Code, Up, Read/Exec, Not accessed} */
+	0x8f, /* G=1, D/B=0, AVL=0, Segment Limit High=0xf */
+	0x00, /* Base Address Hi */
+	/* 30 : ring 0 data (16bit) */
+	0xff, 0xff, /* Segment Limit Low */
+	0x00, 0x00, /* Base Address Low */
+	0x00, /* Base Address Mid */
+	0x92, /* P=1, DPL=0, S=1, Type={Data, Up, Read/Write, Not accessed} */
+	0x8f, /* G=1, D/B=0, AVL=0, Segment Limit High=0xf */
+	0x00, /* Base Address Hi */
 };
 
 void gdt_init(void) {

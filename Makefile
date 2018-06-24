@@ -16,7 +16,8 @@ JOS_OBJDIR=objs-jos
 
 SRCDIR=src
 
-OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o
+OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o \
+	display.o display_vbe.o font.o
 
 TARGET=bootia32.efi
 
@@ -62,6 +63,12 @@ $(NATIVE_OBJDIR)/%.o: $(SRCDIR)/%.S .$(NATIVE_OBJDIR)-exists
 $(JOS_OBJDIR)/%.o: $(SRCDIR)/%.S .$(JOS_OBJDIR)-exists
 	$(JOS_GCC) $(COMMON_CFLAGS) $(JOS_CFLAGS) -c -o $@ $<
 
+$(NATIVE_OBJDIR)/%.o: %.c .$(NATIVE_OBJDIR)-exists
+	$(NATIVE_GCC) $(COMMON_CFLAGS) $(NATIVE_CFLAGS) -Isrc -c -o $@ $<
+
+$(JOS_OBJDIR)/%.o: %.c .$(JOS_OBJDIR)-exists
+	$(JOS_GCC) $(COMMON_CFLAGS) $(JOS_CFLAGS) -Isrc -c -o $@ $<
+
 .$(NATIVE_OBJDIR)-exists:
 	mkdir -p $(NATIVE_OBJDIR)
 	@touch $@
@@ -70,9 +77,12 @@ $(JOS_OBJDIR)/%.o: $(SRCDIR)/%.S .$(JOS_OBJDIR)-exists
 	mkdir -p $(JOS_OBJDIR)
 	@touch $@
 
+font.c: font.bmp font_img2src.pl
+	perl font_img2src.pl $< $@
+
 .PHONY: clean
 clean:
 	rm -rf $(NATIVE_OBJDIR) $(JOS_OBJDIR) \
 		.$(NATIVE_OBJDIR)-exists .$(JOS_OBJDIR)-exists \
 		.native-built .jos-built \
-		$(TARGET)
+		font.c $(TARGET)

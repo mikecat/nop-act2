@@ -227,6 +227,4 @@ void display_init(void) {
 	io_out16(0x03c4, 0x0204);
 	io_out16(0x03ce, 0x1305);
 	io_out16(0x03ce, 0x0e06);
-
-	__asm__ __volatile("sti\n\t");
 }

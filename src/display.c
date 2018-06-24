@@ -2,6 +2,16 @@
 #include "io.h"
 #include "font.h"
 
+static int vbe_init(void) {
+	extern int vbe_entry(void);
+	extern unsigned char vbe_code[];
+	extern unsigned int vbe_code_size;
+	unsigned char *copy_ptr = (unsigned char*)0x1000;
+	unsigned int i;
+	for (i = 0; i < vbe_code_size; i++) copy_ptr[i] = vbe_code[i];
+	return vbe_entry();
+}
+
 static inline void crt_write(int index, int data) {
 	io_out16(0x03d4, ((data & 0xff) << 8) | (index & 0xff));
 }
@@ -37,15 +47,21 @@ void display_init(void) {
 
 	__asm__ __volatile("cli\n\t");
 
-	/* disable VBE for QEMU */
-	/* reference: https://github.com/qemu/vgabios/blob/master/vbe.h */
-	/* reference: http://hrb.osask.jp/wiki/?advance/QEMUVGA */
-	io_out16(0x01ce, 0x0004);
-	io_out16(0x01cf, 0x0000);
+	/* disable VBE b y calling BIOS initialization and have VGA registers work properly */
+	if (!vbe_init()) {
+		/* failed, fallback */
 
-	/* magic for have VirtualBox disable VBE and work properly */
-	/* reference: https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Devices/Graphics/DevVGA.cpp */
-	io_out16(0x03c4, 0x0007);
+		/* disable VBE for QEMU */
+		/* reference: https://github.com/qemu/vgabios/blob/master/vbe.h */
+		/* reference: http://hrb.osask.jp/wiki/?advance/QEMUVGA */
+		io_out16(0x01ce, 0x0004);
+		io_out16(0x01cf, 0x0000);
+
+		/* magic for have VirtualBox disable VBE and work properly */
+		/* reference: https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Devices/Graphics/DevVGA.cpp */
+		io_out16(0x03c4, 0x0007);
+	}
+
 	/* sequencer reset */
 	io_out16(0x03c4, 0x0000);
 	io_out16(0x03c4, 0x0100);

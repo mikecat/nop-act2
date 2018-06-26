@@ -3,7 +3,7 @@
 #include "io.h"
 
 extern void* interrupts_land_table[];
-static void (*interrupt_handler)(int iid, int ecode) = 0;
+static void (*interrupt_handler[256])(int ecode);
 
 unsigned char idt[8 * 256];
 
@@ -12,6 +12,8 @@ void interrupts_init(void) {
 	unsigned long idt_addr = (unsigned long)idt;
 	int i;
 	__asm__ __volatile__ ("cli\n\t");
+
+	for (i = 0; i < 256; i++) interrupt_handler[i] = 0;
 
 	/* config slave 8259A */
 	io_out8(0xa0, 0x11); /* ICW1 (command) */
@@ -50,8 +52,8 @@ void interrupts_init(void) {
 	: : "m"(lidt));
 }
 
-void set_interrupt_handler(void (*handler)(int iid, int ecode)) {
-	interrupt_handler = handler;
+void set_interrupt_handler(int iid, void (*handler)(int ecode)) {
+	if (0 <= iid && iid < 256) interrupt_handler[iid] = handler;
 }
 
 void set_irq_enable(int enable) {
@@ -67,7 +69,7 @@ int get_irq_enabled(void) {
 }
 
 void c_base_interrupt_handler(int iid, int ecode) {
-	if (interrupt_handler != 0) interrupt_handler(iid, ecode);
+	if (interrupt_handler[iid] != 0) interrupt_handler[iid](ecode);
 
 	/* send EOI */
 	if (0x20 <= iid && iid < 0x28) {

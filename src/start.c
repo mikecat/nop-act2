@@ -23,7 +23,9 @@ int _start(void* arg1) {
 		serial_write(*str);
 		str++;
 	}
-	while (serial_read() != 'q');
+	for (;;) {
+		terminal_putchar(serial_read());
+	}
 
 	return 0;
 }

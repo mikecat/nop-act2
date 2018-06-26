@@ -16,6 +16,7 @@ int _start(void* arg1) {
 	interrupts_init();
 	terminal_init();
 	serial_init();
+	serial_write(0x1b); serial_write('c'); /* VT100 reset */
 
 	while (*str != '\0') {
 		terminal_putchar(*str);

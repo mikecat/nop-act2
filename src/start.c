@@ -40,6 +40,7 @@ int _start(void* arg1) {
 #else
 	for(i=80;i<0x8000;i+=81)vram[i * 2] = '0';
 #endif
+	move_cursor(0, 1);
 
 	while (*str != '\0') {
 		serial_write(*(str++));

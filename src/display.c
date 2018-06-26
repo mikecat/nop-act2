@@ -236,3 +236,11 @@ void display_init(void) {
 	io_out16(0x03ce, 0x1305);
 	io_out16(0x03ce, 0x0e06);
 }
+
+void move_cursor(int x, int y) {
+	int offset = y * 80 + x;
+	/* Cursor Location High */
+	crt_write(0x0e, (offset >> 8) & 0xff);
+	/* Cursor Location Low */
+	crt_write(0x0f, offset & 0xff);
+}

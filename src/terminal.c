@@ -17,6 +17,8 @@ struct char_element_t {
 int cursor_x, cursor_y;
 struct char_element_t display[HEIGHT][WIDTH];
 
+int scroll_top, scroll_bottom;
+
 int rightmost_print_mode;
 
 int escmode;
@@ -33,6 +35,8 @@ void terminal_init(void) {
 	int i, j;
 	cursor_x = 0;
 	cursor_y = 0;
+	scroll_top = 0;
+	scroll_bottom = HEIGHT - 1;
 	for (i = 0; i < HEIGHT; i++) {
 		for (j = 0; j < WIDTH; j++) {
 			vram[(i * WIDTH + j) * 2    ] = display[i][j].c = ' ';
@@ -49,29 +53,29 @@ void terminal_init(void) {
 
 static void screen_shiftup(void) {
 	int i, j;
-	for (i = 1; i < HEIGHT; i++) {
+	for (i = scroll_top + 1; i <= scroll_bottom; i++) {
 		for (j = 0; j < WIDTH; j++) {
 			vram[((i - 1) * WIDTH + j) * 2    ] = display[i - 1][j].c = display[i][j].c;
 			vram[((i - 1) * WIDTH + j) * 2 + 1] = display[i - 1][j].attr = display[i][j].attr;
 		}
 	}
 	for (j = 0; j < WIDTH; j++) {
-		vram[((HEIGHT - 1) * WIDTH + j) * 2    ] = display[HEIGHT - 1][j].c = ' ';
-		vram[((HEIGHT - 1) * WIDTH + j) * 2 + 1] = display[HEIGHT - 1][j].attr = 0x07;
+		vram[(scroll_bottom * WIDTH + j) * 2    ] = display[scroll_bottom][j].c = ' ';
+		vram[(scroll_bottom * WIDTH + j) * 2 + 1] = display[scroll_bottom][j].attr = 0x07;
 	}
 }
 
 static void screen_shiftdown(void) {
 	int i, j;
-	for (i = HEIGHT - 1; i > 0; i--) {
+	for (i = scroll_bottom; i > scroll_top; i--) {
 		for (j = 0; j < WIDTH; j++) {
 			vram[(i * WIDTH + j) * 2    ] = display[i][j].c = display[i - 1][j].c;
 			vram[(i * WIDTH + j) * 2 + 1] = display[i][j].attr = display[i - 1][j].attr;
 		}
 	}
 	for (j = 0; j < WIDTH; j++) {
-		vram[j * 2    ] = display[0][j].c = ' ';
-		vram[j * 2 + 1] = display[0][j].attr = 0x07;
+		vram[(scroll_top * WIDTH + j) * 2    ] = display[scroll_top][j].c = ' ';
+		vram[(scroll_top * WIDTH + j) * 2 + 1] = display[scroll_top][j].attr = 0x07;
 	}
 }
 
@@ -81,19 +85,19 @@ static void esc_onechar(int c) {
 			cursor_x = 0;
 			/* do same thing as case 'D' */
 		case 'D':
-			if (cursor_y < HEIGHT - 1) {
-				cursor_y++;
-			} else {
+			if (cursor_y == scroll_bottom) {
 				screen_shiftup();
+			} else if (cursor_y < HEIGHT - 1) {
+				cursor_y++;
 			}
 			move_cursor(cursor_x, cursor_y);
 			break;
 		case 'M':
-			if (cursor_y > 0) {
+			if (cursor_y == scroll_top) {
+				screen_shiftdown();
+			} else if (cursor_y > 0) {
 				cursor_y--;
 				move_cursor(cursor_x, cursor_y);
-			} else {
-				screen_shiftdown();
 			}
 			break;
 		case 'c':
@@ -105,6 +109,8 @@ static void esc_onechar(int c) {
 					}
 				}
 				cursor_x = cursor_y = 0;
+				scroll_top = 0;
+				scroll_bottom = HEIGHT - 1;
 				move_cursor(cursor_x, cursor_y);
 			}
 			break;
@@ -124,6 +130,8 @@ static void esc_twochar(int c1, int c2) {
 							}
 						}
 						cursor_x = cursor_y = 0;
+						scroll_top = 0;
+						scroll_bottom = HEIGHT - 1;
 						move_cursor(cursor_x, cursor_y);
 					}
 					break;
@@ -163,14 +171,18 @@ static void esc_multichar(int c) {
 			case 'A':
 				{
 					int delta = params[0] < 0 ? 1 : params[0];
-					if (cursor_y < delta) cursor_y = 0; else cursor_y -= delta;
+					int new_y = cursor_y < delta? 0 : cursor_y - delta;
+					if (cursor_y >= scroll_top && new_y < scroll_top) new_y = scroll_top;
+					cursor_y = new_y;
 					move_cursor(cursor_x, cursor_y);
 				}
 				break;
 			case 'B':
 				{
 					int delta = params[0] < 0 ? 1 : params[0];
-					if (delta > HEIGHT - cursor_y - 1) cursor_y = HEIGHT - 1; else cursor_y += delta;
+					int new_y = delta > HEIGHT - cursor_y - 1 ? HEIGHT - 1 : cursor_y + delta;
+					if (cursor_y <= scroll_bottom && new_y > scroll_bottom) new_y = scroll_bottom;
+					cursor_y = new_y;
 					move_cursor(cursor_x, cursor_y);
 				}
 				break;
@@ -197,6 +209,19 @@ static void esc_multichar(int c) {
 				if (cursor_x < 0) cursor_x = 0;
 				if (cursor_x >= WIDTH) cursor_x = WIDTH - 1;
 				move_cursor(cursor_x, cursor_y);
+				break;
+			case 'r':
+				{
+					int new_top = params[0] <= 0 ? 0 : params[0] - 1;
+					int new_bottom = (param_num < 2 || params[1] <=0) ? HEIGHT - 1 : params[1] - 1;
+					if (new_top < new_bottom && new_top < HEIGHT) {
+						scroll_top = new_top;
+						scroll_bottom = new_bottom;
+						cursor_x = 0;
+						cursor_y = 0;
+						move_cursor(cursor_x, cursor_y);
+					}
+				}
 				break;
 		}
 	}
@@ -262,11 +287,11 @@ void terminal_putchar(int c) {
 			rightmost_print_mode = 0;
 			break;
 		case '\n':
-			if (cursor_y < HEIGHT - 1) {
+			if (cursor_y == scroll_bottom) {
+				screen_shiftup();
+			} else if (cursor_y < HEIGHT - 1) {
 				cursor_y++;
 				move_cursor(cursor_x, cursor_y);
-			} else {
-				screen_shiftup();
 			}
 			rightmost_print_mode = 0;
 			break;

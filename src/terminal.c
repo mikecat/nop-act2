@@ -16,6 +16,8 @@ struct char_element_t {
 int cursor_x, cursor_y;
 struct char_element_t display[HEIGHT][WIDTH];
 
+int rightmost_print_mode;
+
 int escmode;
 int escchar;
 enum esc_status_t {
@@ -41,6 +43,7 @@ void terminal_init(void) {
 	escchar = 0;
 	esctype = ESC_INIT;
 	escparamlen = 0;
+	rightmost_print_mode = 0;
 }
 
 static void screen_shiftup(void) {
@@ -66,6 +69,7 @@ void terminal_putchar(int c) {
 			return;
 		} else if (c == 0x18 || c == 0x1a) {
 			escmode = 0;
+			rightmost_print_mode = 0;
 			return;
 		} else if (0x20 <= c && c < 0x7f) {
 			switch (esctype) {
@@ -82,21 +86,25 @@ void terminal_putchar(int c) {
 					} else {
 						/* escape sequence with one character */
 						escmode = 0;
+						rightmost_print_mode = 0;
 					}
 					break;
 				case ESC_TWOCHAR:
 					escmode = 0;
+					rightmost_print_mode = 0;
 					break;
 				case ESC_MULTICHAR:
 					if (('0' <= c && c <= '9') || c == ';' || c == '?') {
 						if (escparamlen < ESC_PARAM_SIZE_MAX) escparam[escparamlen++] = c;
 					} else {
 						escmode = 0;
+						rightmost_print_mode = 0;
 					}
 					break;
 				default:
 					/* error */
 					escmode = 0;
+					rightmost_print_mode = 0;
 					break;
 			}
 			return;
@@ -106,6 +114,7 @@ void terminal_putchar(int c) {
 		case '\r':
 			cursor_x = 0;
 			move_cursor(cursor_x, cursor_y);
+			rightmost_print_mode = 0;
 			break;
 		case '\n':
 			if (cursor_y < HEIGHT - 1) {
@@ -114,12 +123,14 @@ void terminal_putchar(int c) {
 			} else {
 				screen_shiftup();
 			}
+			rightmost_print_mode = 0;
 			break;
 		case '\b':
 			if (cursor_x > 0) {
 				cursor_x--;
 				move_cursor(cursor_x, cursor_y);
 			}
+			rightmost_print_mode = 0;
 			break;
 		case 0x1b:
 			escmode = 1;
@@ -129,15 +140,27 @@ void terminal_putchar(int c) {
 		default:
 			if (0x20 <= c && c < 0x7f) {
 				if (0 <= cursor_x && cursor_x < WIDTH && 0 <= cursor_y && cursor_y < HEIGHT) {
-					vram[(cursor_y * WIDTH + cursor_x) * 2] = display[cursor_y][cursor_x].c = c;
+					if (!rightmost_print_mode) {
+						vram[(cursor_y * WIDTH + cursor_x) * 2] = display[cursor_y][cursor_x].c = c;
+					}
 					if (cursor_x + 1 < WIDTH) {
 						cursor_x++;
-					} else if (cursor_y + 1 < HEIGHT) {
-						cursor_y++;
-						cursor_x = 0;
+						rightmost_print_mode = 0;
 					} else {
-						screen_shiftup();
-						cursor_x = 0;
+						if (rightmost_print_mode) {
+							if (cursor_y + 1 < HEIGHT) {
+								cursor_y++;
+								cursor_x = 0;
+							} else {
+								screen_shiftup();
+								cursor_x = 0;
+							}
+							vram[(cursor_y * WIDTH + cursor_x) * 2] = display[cursor_y][cursor_x].c = c;
+							cursor_x++;
+							rightmost_print_mode = 0;
+						} else {
+							rightmost_print_mode = 1;
+						}
 					}
 					move_cursor(cursor_x, cursor_y);
 				}

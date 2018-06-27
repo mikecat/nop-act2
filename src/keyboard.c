@@ -52,6 +52,19 @@ void keyboard_interrupt_handler(int ecode) {
 		else if (!e0_flag && sc == 0x59) rshift_flag = !f0_flag;
 		else if (sc == 0x14) {
 			if (e0_flag) rctrl_flag = !f0_flag; else lctrl_flag = !f0_flag;
+		} else if (e0_flag && !f0_flag) {
+			int code = 0;
+			switch (sc) {
+				case 0x75: code = 'A'; break; /* up */
+				case 0x72: code = 'B'; break; /* down */
+				case 0x74: code = 'C'; break; /* right */
+				case 0x6b: code = 'D'; break; /* left */
+			}
+			if (!(lctrl_flag || rctrl_flag) && code != 0) {
+				keyboard_enqueue(0x1b);
+				keyboard_enqueue('[');
+				keyboard_enqueue(code);
+			}
 		} else if (!e0_flag && !f0_flag) {
 			int c = onechar_table[sc][lshift_flag || rshift_flag];
 			if (c != 0) {

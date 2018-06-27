@@ -62,6 +62,8 @@ void keyboard_interrupt_handler(int ecode) {
 					if (!(lctrl_flag || rctrl_flag)) keyboard_enqueue('/');
 				} else if (sc == 0x5a) {
 					if (!(lctrl_flag || rctrl_flag)) keyboard_enqueue('\n');
+				} else if (sc == 0x71) {
+					if (!(lctrl_flag || rctrl_flag || lshift_flag || rshift_flag)) keyboard_enqueue(0x7f);
 				} else {
 					int code = 0;
 					switch (sc) {

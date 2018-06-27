@@ -61,7 +61,42 @@ static void screen_shiftup(void) {
 	}
 }
 
+static void screen_shiftdown(void) {
+	int i, j;
+	for (i = HEIGHT - 1; i > 0; i--) {
+		for (j = 0; j < WIDTH; j++) {
+			vram[(i * WIDTH + j) * 2    ] = display[i][j].c = display[i - 1][j].c;
+			vram[(i * WIDTH + j) * 2 + 1] = display[i][j].attr = display[i - 1][j].attr;
+		}
+	}
+	for (j = 0; j < WIDTH; j++) {
+		vram[j * 2    ] = display[0][j].c = ' ';
+		vram[j * 2 + 1] = display[0][j].attr = 0x07;
+	}
+}
+
 static void esc_onechar(int c) {
+	switch (c) {
+		case 'E':
+			cursor_x = 0;
+			/* do same thing as case 'D' */
+		case 'D':
+			if (cursor_y < HEIGHT - 1) {
+				cursor_y++;
+			} else {
+				screen_shiftup();
+			}
+			move_cursor(cursor_x, cursor_y);
+			break;
+		case 'M':
+			if (cursor_y > 0) {
+				cursor_y--;
+				move_cursor(cursor_x, cursor_y);
+			} else {
+				screen_shiftdown();
+			}
+			break;
+	}
 }
 
 static void esc_twochar(int c1, int c2) {
@@ -95,6 +130,44 @@ static void esc_multichar(int c) {
 	if (param_num < ESC_PARAM_NUM_MAX) params[param_num++] = current;
 	if (!question) {
 		switch (c) {
+			case 'A':
+				{
+					int delta = params[0] < 0 ? 1 : params[0];
+					if (cursor_y < delta) cursor_y = 0; else cursor_y -= delta;
+					move_cursor(cursor_x, cursor_y);
+				}
+				break;
+			case 'B':
+				{
+					int delta = params[0] < 0 ? 1 : params[0];
+					if (delta > HEIGHT - cursor_y - 1) cursor_y = HEIGHT - 1; else cursor_y += delta;
+					move_cursor(cursor_x, cursor_y);
+				}
+				break;
+			case 'C':
+				{
+					int delta = params[0] < 0 ? 1 : params[0];
+					if (delta > WIDTH - cursor_x - 1) cursor_x = WIDTH - 1; else cursor_x += delta;
+					move_cursor(cursor_x, cursor_y);
+				}
+				break;
+			case 'D':
+				{
+					int delta = params[0] < 0 ? 1 : params[0];
+					if (cursor_x < delta) cursor_x = 0; else cursor_x -= delta;
+					move_cursor(cursor_x, cursor_y);
+				}
+				break;
+			case 'H':
+			case 'f':
+				cursor_y = params[0] - 1;
+				cursor_x = param_num >= 2 ? params[1] - 1 : 0;
+				if (cursor_y < 0) cursor_y = 0;
+				if (cursor_y >= HEIGHT) cursor_y = HEIGHT - 1;
+				if (cursor_x < 0) cursor_x = 0;
+				if (cursor_x >= WIDTH) cursor_x = WIDTH - 1;
+				move_cursor(cursor_x, cursor_y);
+				break;
 		}
 	}
 }

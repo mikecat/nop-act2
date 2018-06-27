@@ -223,6 +223,38 @@ static void esc_multichar(int c) {
 					}
 				}
 				break;
+			case 'J':
+				{
+					int mode = params[0] <= 0 ? 0 : params[0];
+					int i, j;
+					for (i = 0; i < HEIGHT; i++) {
+						for (j = 0; j < WIDTH; j++) {
+							int do_erase = (mode == 2);
+							if (mode == 0 && (i > cursor_y || (i == cursor_y && j >= cursor_x))) do_erase = 1;
+							if (mode == 1 && (i < cursor_y || (i == cursor_y && j <= cursor_x))) do_erase = 1;
+							if (do_erase) {
+								vram[(i * WIDTH + j) * 2    ] = display[i][j].c = ' ';
+								vram[(i * WIDTH + j) * 2 + 1] = display[i][j].attr = 0x07;
+							}
+						}
+					}
+				}
+				break;
+			case 'K':
+				{
+					int mode = params[0] <= 0 ? 0 : params[0];
+					int j;
+					for (j = 0; j < WIDTH; j++) {
+						int do_erase = (mode == 2);
+						if (mode == 0 && j >= cursor_x) do_erase = 1;
+						if (mode == 1 && j <= cursor_x) do_erase = 1;
+						if (do_erase) {
+							vram[(cursor_y * WIDTH + j) * 2    ] = display[cursor_y][j].c = ' ';
+							vram[(cursor_y * WIDTH + j) * 2 + 1] = display[cursor_y][j].attr = 0x07;
+						}
+					}
+				}
+				break;
 		}
 	}
 }

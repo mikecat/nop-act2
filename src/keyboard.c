@@ -16,11 +16,15 @@ static char onechar_table[256][2] = {
 	[0x45] = "00", [0x16] = "1!", [0x1e] = "2\"", [0x26] = "3#",
 	[0x25] = "4$", [0x2e] = "5%", [0x36] = "6&", [0x3d] = "7'",
 	[0x3e] = "8(", [0x46] = "9)", [0x4e] = "-=", [0x55] = "^~",
-	[0x51] = "\\|", [0x5b] = "[{", [0x5d] = "]}", [0x4c] = ";+",
+	[0x6a] = "\\|", [0x5b] = "[{", [0x5d] = "]}", [0x4c] = ";+",
 	[0x52] = ":*", [0x41] = ",<", [0x49] = ".>", [0x4a] = "/?",
-	[0x54] = "@`",
+	[0x54] = "@`", [0x51] = "\\_",
 	[0x5a] = "\n\n", [0x76] = "\x1b\x1b", [0x66] = "\b\b",
-	[0x29] = "  ", [0x0d] = "\t\t"
+	[0x29] = "  ", [0x0d] = "\t\t",
+	[0x70] = "00", [0x69] = "11", [0x72] = "22", [0x7a] = "33",
+	[0x6b] = "44", [0x73] = "55", [0x74] = "66", [0x6c] = "77",
+	[0x75] = "88", [0x7d] = "99", [0x71] = "..", [0x79] = "++",
+	[0x7b] = "--", [0x7c] = "**"
 };
 
 unsigned char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
@@ -52,32 +56,40 @@ void keyboard_interrupt_handler(int ecode) {
 		else if (!e0_flag && sc == 0x59) rshift_flag = !f0_flag;
 		else if (sc == 0x14) {
 			if (e0_flag) rctrl_flag = !f0_flag; else lctrl_flag = !f0_flag;
-		} else if (e0_flag && !f0_flag) {
-			int code = 0;
-			switch (sc) {
-				case 0x75: code = 'A'; break; /* up */
-				case 0x72: code = 'B'; break; /* down */
-				case 0x74: code = 'C'; break; /* right */
-				case 0x6b: code = 'D'; break; /* left */
-			}
-			if (!(lctrl_flag || rctrl_flag) && code != 0) {
-				keyboard_enqueue(0x1b);
-				keyboard_enqueue('[');
-				keyboard_enqueue(code);
-			}
-		} else if (!e0_flag && !f0_flag) {
-			int c = onechar_table[sc][lshift_flag || rshift_flag];
-			if (c != 0) {
-				if (lctrl_flag || rctrl_flag) {
-					if (c == '`') {
-						keyboard_enqueue(0x1b);
-					} else if (c == '-' || c == '=') {
-						keyboard_enqueue(0x1f);
-					} else if (c == 0x40 || ('a' <= c && c <= 'z') || (0x5b <= c && c <= 0x5f)) {
-						keyboard_enqueue(c & 0x1f);
-					}
+		} else if (!f0_flag) {
+			if (e0_flag) {
+				if (sc == 0x4a) {
+					if (!(lctrl_flag || rctrl_flag)) keyboard_enqueue('/');
+				} else if (sc == 0x5a) {
+					if (!(lctrl_flag || rctrl_flag)) keyboard_enqueue('\n');
 				} else {
-					keyboard_enqueue(c);
+					int code = 0;
+					switch (sc) {
+						case 0x75: code = 'A'; break; /* up */
+						case 0x72: code = 'B'; break; /* down */
+						case 0x74: code = 'C'; break; /* right */
+						case 0x6b: code = 'D'; break; /* left */
+					}
+					if (!(lctrl_flag || rctrl_flag) && code != 0) {
+						keyboard_enqueue(0x1b);
+						keyboard_enqueue('[');
+						keyboard_enqueue(code);
+					}
+				}
+			} else {
+				int c = onechar_table[sc][lshift_flag || rshift_flag];
+				if (c != 0) {
+					if (lctrl_flag || rctrl_flag) {
+						if (c == '`') {
+							keyboard_enqueue(0x1b);
+						} else if (sc == 0x4e) {
+							keyboard_enqueue(0x1f);
+						} else if (c == 0x40 || ('a' <= c && c <= 'z') || (0x5b <= c && c <= 0x5f)) {
+							keyboard_enqueue(c & 0x1f);
+						}
+					} else {
+						keyboard_enqueue(c);
+					}
 				}
 			}
 		}

@@ -3,6 +3,7 @@
 #include "serial.h"
 #include "display.h"
 #include "terminal.h"
+#include "keyboard.h"
 
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
@@ -15,6 +16,7 @@ int _start(void* arg1) {
 	display_init();
 	interrupts_init();
 	terminal_init();
+	keyboard_init();
 	serial_init();
 	serial_write(0x1b); serial_write('c'); /* VT100 reset */
 
@@ -24,7 +26,11 @@ int _start(void* arg1) {
 		str++;
 	}
 	for (;;) {
+#if 0
 		terminal_putchar(serial_read());
+#else
+		terminal_putchar(keyboard_read());
+#endif
 	}
 
 	return 0;

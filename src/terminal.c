@@ -96,10 +96,40 @@ static void esc_onechar(int c) {
 				screen_shiftdown();
 			}
 			break;
+		case 'c':
+			{
+				int i, j;
+				for (i = 0; i < HEIGHT; i++) {
+					for (j = 0; j < WIDTH; j++) {
+						vram[(i * WIDTH + j) * 2] = display[i][j].c = ' ';
+					}
+				}
+				cursor_x = cursor_y = 0;
+				move_cursor(cursor_x, cursor_y);
+			}
+			break;
 	}
 }
 
 static void esc_twochar(int c1, int c2) {
+	switch (c1) {
+		case '#':
+			switch (c2) {
+				case '8':
+					{
+						int i, j;
+						for (i = 0; i < HEIGHT; i++) {
+							for (j = 0; j < WIDTH; j++) {
+								vram[(i * WIDTH + j) * 2] = display[i][j].c = 'E';
+							}
+						}
+						cursor_x = cursor_y = 0;
+						move_cursor(cursor_x, cursor_y);
+					}
+					break;
+			}
+			break;
+	}
 }
 
 static void esc_multichar(int c) {

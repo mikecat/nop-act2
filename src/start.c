@@ -29,7 +29,9 @@ int _start(void* arg1) {
 #if 0
 		terminal_putchar(serial_read());
 #else
-		terminal_putchar(keyboard_read());
+		int c = keyboard_read();
+		terminal_putchar(c);
+		serial_write(c);
 #endif
 	}
 

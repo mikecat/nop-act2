@@ -55,7 +55,17 @@ void keyboard_interrupt_handler(int ecode) {
 		} else if (!e0_flag && !f0_flag) {
 			int c = onechar_table[sc][lshift_flag || rshift_flag];
 			if (c != 0) {
-				keyboard_enqueue(c);
+				if (lctrl_flag || rctrl_flag) {
+					if (c == '`') {
+						keyboard_enqueue(0x1b);
+					} else if (c == '-' || c == '=') {
+						keyboard_enqueue(0x1f);
+					} else if (c == 0x40 || ('a' <= c && c <= 'z') || (0x5b <= c && c <= 0x5f)) {
+						keyboard_enqueue(c & 0x1f);
+					}
+				} else {
+					keyboard_enqueue(c);
+				}
 			}
 		}
 		e0_flag = 0;

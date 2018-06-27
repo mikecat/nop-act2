@@ -29,7 +29,12 @@ int _start(void* arg1) {
 #if 0
 		terminal_putchar(serial_read());
 #else
-		terminal_putchar(keyboard_read());
+		int k = keyboard_read();
+		static const char* digits = "0123456789ABCDEF";
+		terminal_putchar(' ');
+		terminal_putchar(digits[(k / 16) % 16]);
+		terminal_putchar(digits[k % 16]);
+		terminal_putchar(' ');
 #endif
 	}
 

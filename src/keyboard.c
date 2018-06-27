@@ -111,6 +111,10 @@ void keyboard_init(void) {
 
 	/* set scan code 2 */
 	keyboard_hw_write(1, 0xf0);
+	ret = keyboard_hw_read();
+	if (ret != 0xfa) {
+		return;
+	}
 	keyboard_hw_write(1, 0x02);
 	ret = keyboard_hw_read();
 	if (ret != 0xfa) {

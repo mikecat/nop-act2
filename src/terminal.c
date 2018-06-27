@@ -5,6 +5,7 @@
 #define HEIGHT 25
 
 #define ESC_PARAM_SIZE_MAX 128
+#define ESC_PARAM_NUM_MAX 16
 
 static unsigned char* vram = (unsigned char*)0xb8000;
 
@@ -60,6 +61,44 @@ static void screen_shiftup(void) {
 	}
 }
 
+static void esc_onechar(int c) {
+}
+
+static void esc_twochar(int c1, int c2) {
+}
+
+static void esc_multichar(int c) {
+	int params[ESC_PARAM_NUM_MAX];
+	int param_num = 0;
+	int question = 0;
+	int i = 0;
+	int current = -1;
+	if (escparamlen > 0 && escparam[0] == '?') {
+		question = 1;
+		i = 1;
+	}
+	for (; i < escparamlen; i++) {
+		if ('0' <= escparam[i] && escparam[i] <= '9') {
+			int digit = escparam[i] - '0';
+			if (current < 0) current = 0;
+			if (current > 0x7fffffff / 10 || current * 10 > 0x7fffffff - digit) {
+				/* overflow */
+				current = 0x7fffffff;
+			} else {
+				current = current * 10 + digit;
+			}
+		} else if (escparam[i] == ';') {
+			if (param_num < ESC_PARAM_NUM_MAX) params[param_num++] = current;
+			current = -1;
+		}
+	}
+	if (param_num < ESC_PARAM_NUM_MAX) params[param_num++] = current;
+	if (!question) {
+		switch (c) {
+		}
+	}
+}
+
 void terminal_putchar(int c) {
 	if (escmode) {
 		if (c == 0x1b) {
@@ -85,11 +124,13 @@ void terminal_putchar(int c) {
 						escparamlen = 0;
 					} else {
 						/* escape sequence with one character */
+						esc_onechar(c);
 						escmode = 0;
 						rightmost_print_mode = 0;
 					}
 					break;
 				case ESC_TWOCHAR:
+					esc_twochar(escchar, c);
 					escmode = 0;
 					rightmost_print_mode = 0;
 					break;
@@ -97,6 +138,7 @@ void terminal_putchar(int c) {
 					if (('0' <= c && c <= '9') || c == ';' || c == '?') {
 						if (escparamlen < ESC_PARAM_SIZE_MAX) escparam[escparamlen++] = c;
 					} else {
+						esc_multichar(c);
 						escmode = 0;
 						rightmost_print_mode = 0;
 					}

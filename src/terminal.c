@@ -370,3 +370,8 @@ void terminal_putchar(int c) {
 			break;
 	}
 }
+
+void terminal_get_cursor_pos(int* px, int* py) {
+	if (px != 0) *px = cursor_x + 1;
+	if (py != 0) *py = cursor_y + 1;
+}

@@ -3,5 +3,6 @@
 
 void terminal_init(void);
 void terminal_putchar(int c);
+void terminal_get_cursor_pos(int* px, int* py);
 
 #endif

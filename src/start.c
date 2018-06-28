@@ -4,6 +4,7 @@
 #include "display.h"
 #include "terminal.h"
 #include "keyboard.h"
+#include "read_input.h"
 
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
@@ -17,6 +18,7 @@ int _start(void* arg1) {
 	interrupts_init();
 	terminal_init();
 	keyboard_init();
+	read_input_init();
 	serial_init();
 	serial_write(0x1b); serial_write('c'); /* VT100 reset */
 
@@ -26,13 +28,26 @@ int _start(void* arg1) {
 		str++;
 	}
 	for (;;) {
-#if 0
-		terminal_putchar(serial_read());
-#else
-		int c = keyboard_read();
-		terminal_putchar(c);
-		serial_write(c);
-#endif
+		unsigned char buf[4096];
+		int len, i;
+		terminal_putchar('Y');
+		terminal_putchar('U');
+		terminal_putchar('K');
+		terminal_putchar('I');
+		terminal_putchar('.');
+		terminal_putchar('N');
+		terminal_putchar('>');
+		for (len = 0; len < 4096; len++) {
+			int c = read_input_char();
+			if (c == '\n') break;
+			buf[len++] = c;
+		}
+		for (i = 0; i < len; i++) {
+			terminal_putchar(buf[i]);
+			serial_write(buf[i]);
+		}
+		terminal_putchar('\r'); serial_write('\r');
+		terminal_putchar('\n'); serial_write('\n');
 	}
 
 	return 0;

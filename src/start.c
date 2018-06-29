@@ -6,6 +6,10 @@
 #include "keyboard.h"
 #include "read_input.h"
 
+#ifdef NATIVE_HACK
+void __chkstk_ms(void) {}
+#endif
+
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
 	const char* str = "hello, world\r\n";

@@ -2,7 +2,7 @@ COMMON_CFLAGS=-O2 -Wall -Wextra -pedantic -std=c99
 COMMON_LDFLAGS=
 
 NATIVE_GCC=gcc
-NATIVE_CFLAGS=
+NATIVE_CFLAGS=-DNATIVE_HACK
 NATIVE_LD=ld
 NATIVE_LDFLAGS=--subsystem 10 -e __start
 

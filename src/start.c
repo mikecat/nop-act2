@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "memory.h"
 #include "interrupts.h"
 #include "serial.h"
 #include "display.h"
@@ -18,6 +19,7 @@ int _start(void* arg1) {
 	(void)marker;
 
 	gdt_init();
+	memory_init();
 	display_init();
 	interrupts_init();
 	terminal_init();
@@ -25,6 +27,26 @@ int _start(void* arg1) {
 	read_input_init();
 	serial_init();
 	serial_write(0x1b); serial_write('c'); /* VT100 reset */
+
+	/* memory allocation test */
+	{
+		volatile char *marker = (volatile char*)0x10000;
+		void *buf1, *buf2, *buf3, *buf4;
+		*marker = 0;
+		buf4 = memory_allocate(0x1000);
+		buf3 = memory_allocate(0x1000);
+		buf2 = memory_allocate(0x1000);
+		buf1 = memory_allocate(0x1000);
+		*marker = 0;
+		memory_free(buf1);
+		*marker = 0;
+		memory_free(buf4);
+		*marker = 0;
+		memory_free(buf3);
+		*marker = 0;
+		memory_free(buf2);
+		*marker = 0;
+	}
 
 	while (*str != '\0') {
 		terminal_putchar(*str);

@@ -8,6 +8,7 @@
 #include "read_input.h"
 #include "thread_switch.h"
 #include "timer.h"
+#include "thread.h"
 
 #ifdef NATIVE_HACK
 void __chkstk_ms(void) {}
@@ -38,9 +39,76 @@ void timer_callback(void* data) {
 	terminal_putchar('\n');
 }
 
+void print_number(int n) {
+	char convert[16];
+	char *c = convert;
+	if (n < 0) {
+		terminal_putchar('-');
+		n = -n;
+	}
+	do {
+		*(c++) = n % 10 + '0';
+		n /= 10;
+	} while (n > 0);
+	do {
+		terminal_putchar(*(--c));
+	} while (c > convert);
+}
+
+void add_thread(void* target) {
+	volatile int* t = (volatile int*)target;
+	int i;
+	for (i = 0; i < 1000000000; i++) {
+		*t = *t + 1;
+	}
+}
+
+void shell_thread(void* arg1) {
+	const char* str = "hello, world\r\n";
+	int num = 0;
+	int tid1, tid2;
+	(void)arg1;
+
+	while (*str != '\0') {
+		terminal_putchar(*str);
+		serial_write(*str);
+		str++;
+	}
+
+	tid1 = thread_create(add_thread, &num, 4096);
+	tid2 = thread_create(add_thread, &num, 4096);
+	thread_join(tid1);
+	thread_join(tid2);
+	print_number(num);
+	terminal_putchar('\r');
+	terminal_putchar('\n');
+
+	for (;;) {
+		unsigned char buf[4096];
+		int len, i;
+		terminal_putchar('Y');
+		terminal_putchar('U');
+		terminal_putchar('K');
+		terminal_putchar('I');
+		terminal_putchar('.');
+		terminal_putchar('N');
+		terminal_putchar('>');
+		for (len = 0; len < 4096; len++) {
+			int c = read_input_char();
+			if (c == '\n') break;
+			buf[len++] = c;
+		}
+		for (i = 0; i < len; i++) {
+			terminal_putchar(buf[i]);
+			serial_write(buf[i]);
+		}
+		terminal_putchar('\r'); serial_write('\r');
+		terminal_putchar('\n'); serial_write('\n');
+	}
+}
+
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
-	const char* str = "hello, world\r\n";
 	/* avoid unused warnings */
 	(void)arg1;
 	(void)marker;
@@ -52,6 +120,7 @@ int _start(void* arg1) {
 	terminal_init();
 	keyboard_init();
 	timer_init();
+	thread_init();
 	read_input_init();
 	serial_init();
 	serial_write(0x1b); serial_write('c'); /* VT100 reset */
@@ -103,33 +172,8 @@ int _start(void* arg1) {
 	timer_set(10000, timer_callback, "10s");
 	timer_set(5000, timer_callback, "5s");
 
-	while (*str != '\0') {
-		terminal_putchar(*str);
-		serial_write(*str);
-		str++;
-	}
-	for (;;) {
-		unsigned char buf[4096];
-		int len, i;
-		terminal_putchar('Y');
-		terminal_putchar('U');
-		terminal_putchar('K');
-		terminal_putchar('I');
-		terminal_putchar('.');
-		terminal_putchar('N');
-		terminal_putchar('>');
-		for (len = 0; len < 4096; len++) {
-			int c = read_input_char();
-			if (c == '\n') break;
-			buf[len++] = c;
-		}
-		for (i = 0; i < len; i++) {
-			terminal_putchar(buf[i]);
-			serial_write(buf[i]);
-		}
-		terminal_putchar('\r'); serial_write('\r');
-		terminal_putchar('\n'); serial_write('\n');
-	}
+	thread_create(shell_thread, arg1, 8 * 1024  * 1024);
+	thread_yield();
 
 	return 0;
 }

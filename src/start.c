@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "read_input.h"
 #include "thread_switch.h"
+#include "timer.h"
 
 #ifdef NATIVE_HACK
 void __chkstk_ms(void) {}
@@ -27,6 +28,16 @@ void sub_thread_func(void) {
 	switch_thread(&sub_thread, &main_thread);
 }
 
+void timer_callback(void* data) {
+	const char* s = (const char*)data;
+	while (*s != '\0') {
+		terminal_putchar(*s);
+		s++;
+	}
+	terminal_putchar('\r');
+	terminal_putchar('\n');
+}
+
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
 	const char* str = "hello, world\r\n";
@@ -40,6 +51,7 @@ int _start(void* arg1) {
 	interrupts_init();
 	terminal_init();
 	keyboard_init();
+	timer_init();
 	read_input_init();
 	serial_init();
 	serial_write(0x1b); serial_write('c'); /* VT100 reset */
@@ -83,6 +95,13 @@ int _start(void* arg1) {
 		*((volatile char*)0x10001) = 0; /* marker */
 		memory_free(new_stack);
 	}
+
+	/* timer test */
+	timer_set(1000, timer_callback, "1s");
+	timer_set(3000, timer_callback, "3s");
+	timer_set(2000, timer_callback, "2s");
+	timer_set(10000, timer_callback, "10s");
+	timer_set(5000, timer_callback, "5s");
 
 	while (*str != '\0') {
 		terminal_putchar(*str);

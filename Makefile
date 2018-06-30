@@ -18,7 +18,7 @@ SRCDIR=src
 
 OBJS=start.o serial.o gdt.o interrupts.o interrupts_land.o \
 	display.o display_vbe.o font.o terminal.o keyboard.o read_input.o \
-	memory.o thread_switch.o
+	memory.o thread_switch.o timer.o
 
 TARGET=bootia32.efi
 

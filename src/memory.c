@@ -36,7 +36,7 @@ static struct memory_region_t* region_new(void) {
 		return &((struct memory_region_t*)BUFFER_START)[pooled_num++];
 	} else {
 		struct memory_region_t* ret = region_pool;
-		region_pool = region_pool-> next;
+		region_pool = region_pool->next;
 		return ret;
 	}
 }

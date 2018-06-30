@@ -1,7 +1,7 @@
 #ifndef THREAD_SWITCH_H_GUARD_E92252EB_D75F_451A_89AB_91F35D3A5EA2
 #define THREAD_SWITCH_H_GUARD_E92252EB_D75F_451A_89AB_91F35D3A5EA2
 
-struct thread_status_t {
+struct cpu_status_t {
 #if 1
 	unsigned int eax, ecx, edx, ebx, esi, edi, esp, ebp;
 	unsigned int eip, eflags;
@@ -11,6 +11,6 @@ struct thread_status_t {
 #endif
 };
 
-void switch_thread(struct thread_status_t* current, struct thread_status_t* next);
+void switch_thread(struct cpu_status_t* current, struct cpu_status_t* next);
 
 #endif

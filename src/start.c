@@ -13,7 +13,7 @@
 void __chkstk_ms(void) {}
 #endif
 
-struct thread_status_t main_thread, sub_thread;
+struct cpu_status_t main_thread, sub_thread;
 
 int fib(int n) {
 	if (n <= 1) return n;

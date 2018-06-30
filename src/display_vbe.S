@@ -1,6 +1,6 @@
 #include "display_vbe.h"
 
-.section text
+.section .text
 
 .global _vbe_entry
 .global vbe_entry

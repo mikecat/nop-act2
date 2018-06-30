@@ -69,14 +69,15 @@ int get_irq_enabled(void) {
 }
 
 void c_base_interrupt_handler(int iid, int ecode) {
-	if (interrupt_handler[iid] != 0) interrupt_handler[iid](ecode);
-
 	/* send EOI */
-	if (0x20 <= iid && iid < 0x28) {
-		io_out8(0x20, 0x20);
-	} else if (0x28 <= iid && iid < 0x30) {
+	if (0x28 <= iid && iid < 0x30) {
 		io_out8(0xa0, 0x20);
 	}
+	if (0x20 <= iid && iid < 0x30) {
+		io_out8(0x20, 0x20);
+	}
+
+	if (interrupt_handler[iid] != 0) interrupt_handler[iid](ecode);
 }
 
 /* for some environments */

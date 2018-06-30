@@ -6,10 +6,26 @@
 #include "terminal.h"
 #include "keyboard.h"
 #include "read_input.h"
+#include "thread_switch.h"
 
 #ifdef NATIVE_HACK
 void __chkstk_ms(void) {}
 #endif
+
+struct thread_status_t main_thread, sub_thread;
+
+int fib(int n) {
+	if (n <= 1) return n;
+	return fib(n - 1) + fib(n - 2);
+}
+
+void sub_thread_func(void) {
+	volatile int r;
+	*((volatile char*)0x10001) = 0; /* marker */
+	r = fib(10);
+	*((volatile char*)0x10001) = 0; /* marker */
+	switch_thread(&sub_thread, &main_thread);
+}
 
 int _start(void* arg1) {
 	volatile int marker = 0xDEADBEEF;
@@ -46,6 +62,26 @@ int _start(void* arg1) {
 		*marker = 0;
 		memory_free(buf2);
 		*marker = 0;
+	}
+
+	/* thread switch test */
+	{
+		void* new_stack = memory_allocate(64 * 1024);
+		sub_thread.eax = 0xdeadbeef;
+		sub_thread.ecx = 0x12345678;
+		sub_thread.edx = 0x9abcdef0;
+		sub_thread.ebx = 0xbbbbbbbb;
+		sub_thread.esi = 0x55555555;
+		sub_thread.edi = 0xaaaaaaaa;
+		sub_thread.esp = sub_thread.ebp = (unsigned int)new_stack + (64 * 1024) - 4;
+		sub_thread.cs = 0x08;
+		sub_thread.ds = sub_thread.es = sub_thread.ss = sub_thread.fs = sub_thread.gs = 0x10;
+		sub_thread.eflags = 0x00000002;
+		sub_thread.eip = (unsigned int)sub_thread_func;
+		*((volatile char*)0x10001) = 0; /* marker */
+		switch_thread(&main_thread, &sub_thread);
+		*((volatile char*)0x10001) = 0; /* marker */
+		memory_free(new_stack);
 	}
 
 	while (*str != '\0') {

@@ -42,14 +42,48 @@ static struct memory_region_t* region_new(void) {
 }
 
 void memory_init(void) {
-	unsigned int memory_limit = 0x01000000;
+	unsigned int memory_limit, memory_limit_limit = 0x80000000u;
+	unsigned int esp, cr0_bak;
+	/* disable cache and get stack value */
+	__asm__ __volatile__ (
+		"mov %%esp, %0\n\t"
+		"mov %%cr0, %%eax\n\t"
+		"mov %%eax, %1\n\t"
+		"or $0x40000000, %%eax\n\t"
+		"mov %%eax, %%cr0\n\t"
+	: "=m"(esp) , "=m"(cr0_bak) : : "%eax");
+
+	if (BUFFER_START < esp) memory_limit_limit = esp & 0xff000000u;
+	for (memory_limit = BUFFER_START; memory_limit < memory_limit_limit; memory_limit += PAGE_SIZE) {
+		static const unsigned int MARKER1 = 0xdeadbeefu, MARKER2 = 0xaa5a5a55u;
+		volatile unsigned int *p1 = (volatile unsigned int*)memory_limit;
+		volatile unsigned int *p2 = (volatile unsigned int*)(memory_limit + PAGE_SIZE - sizeof(unsigned int));
+		*p1 = MARKER1;
+		*p2 = MARKER2;
+		if (*p1 != MARKER1) break;
+		if (*p2 != MARKER2) break;
+	}
+
+	/* enable cache if previously enabled */
+	if (!(cr0_bak & 0x40000000)) {
+		__asm__ __volatile__ (
+			"mov %%cr0, %%eax\n\t"
+			"and $0xbfffffff, %%eax\n\t"
+			"mov %%eax, %%cr0\n\t"
+		: : : "%eax");
+	}
+
 	occupied_regions = region_pool = 0;
 	allocated_size = PAGE_SIZE;
 	pooled_num = 1;
-	free_regions = (struct memory_region_t*)BUFFER_START;
-	free_regions->next = 0;
-	free_regions->start_address = BUFFER_START + PAGE_SIZE;
-	free_regions->size = memory_limit - BUFFER_START - PAGE_SIZE;
+	if (BUFFER_START + PAGE_SIZE < memory_limit) {
+		free_regions = (struct memory_region_t*)BUFFER_START;
+		free_regions->next = 0;
+		free_regions->start_address = BUFFER_START + PAGE_SIZE;
+		free_regions->size = memory_limit - BUFFER_START - PAGE_SIZE;
+	} else {
+		free_regions = 0;
+	}
 }
 
 void* memory_allocate(unsigned int size) {

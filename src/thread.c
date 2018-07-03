@@ -176,7 +176,8 @@ void thread_join(int tid) {
 
 	if (threads[tid].thread_status == THREAD_FINISHED) {
 		threads[tid].thread_status = THREAD_INVALID;
-		thread_pool_next[tid] =thread_pool_head;
+		memory_free(threads[tid].stack_addr);
+		thread_pool_next[tid] = thread_pool_head;
 		thread_pool_head = tid;
 	}
 

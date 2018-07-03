@@ -2,7 +2,7 @@
 #include "display.h"
 
 #define WIDTH 80
-#define HEIGHT 25
+#define HEIGHT 24
 
 #define ESC_PARAM_SIZE_MAX 128
 #define ESC_PARAM_NUM_MAX 16

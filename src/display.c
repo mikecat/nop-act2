@@ -25,13 +25,12 @@ void display_init(void) {
 	const int h_sync = 96;
 	const int h_blank2 = 48;
 
-	const int v_display = 475;
-	const int v_blank0 = 5;
+	const int v_display = 480;
 	const int v_blank1 = 10;
 	const int v_sync = 2;
 	const int v_blank2 = 33;
 
-	const int char_scanlines = 19;
+	const int char_scanlines = 20;
 
 	const int hor_total = (h_display + h_blank1 + h_sync + h_blank2) / 8 - 5;
 	const int hor_dis_en_end = h_display / 8 - 1;
@@ -39,11 +38,11 @@ void display_init(void) {
 	const int hor_end_blank = (h_blank1 + h_sync + h_blank2) / 8;
 	const int hor_start_retrace = (h_display + h_blank1) / 8;
 	const int hor_end_retrace = h_sync / 8;
-	const int ver_total = v_display + v_blank0 + v_blank1 + v_sync + v_blank2 - 2;
-	const int ver_start_retrace = v_display + v_blank0 + v_blank1;
+	const int ver_total = v_display + v_blank1 + v_sync + v_blank2 - 2;
+	const int ver_start_retrace = v_display + v_blank1;
 	const int ver_end_retrace = v_sync;
 	const int ver_dis_en_end = v_display - 1;
-	const int ver_start_blank = v_display + v_blank0;
+	const int ver_start_blank = v_display;
 	const int ver_end_blank = v_blank1 + v_sync + v_blank2 - 1;
 
 	int vbe_result;
@@ -123,7 +122,7 @@ void display_init(void) {
 	/* Cursor Start */
 	crt_write(0x0a, ((char_scanlines - 3) & 0x1f));
 	/* Cursor End */
-	crt_write(0x0b, char_scanlines & 0x1f);
+	crt_write(0x0b, (char_scanlines - 1) & 0x1f);
 	/* Start Address High */
 	crt_write(0x0c, 0x00);
 	/* Start Address Low */

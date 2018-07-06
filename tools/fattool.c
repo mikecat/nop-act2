@@ -18,12 +18,15 @@ int main(int argc, char* argv[]) {
 	size_t sector_start, sector_num;
 
 	int i;
-	for (i = 1; i < argc; i++) {
+	if (argc >= 2) {
+		disk_name = argv[1];
+	} else {
+		cmd_error = 1;
+	}
+	for (i = 2; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-help") == 0) {
 				print_help = 1;
-			} else if (strcmp(argv[i], "-disk") == 0) {
-				if (++i >= argc) cmd_error = 1; else disk_name = argv[i];
 			} else if (strcmp(argv[i], "-partition") == 0) {
 				if (++i >= argc) cmd_error = 1; else {
 					if (strcmp(argv[i], "list") == 0) {
@@ -48,12 +51,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (cmd_error || print_help) {
-		fprintf(stderr, "Usage: %s options [command]\n", argc > 0 ? argv[0] : "fattool");
+		fprintf(stderr, "Usage: %s disk_file [options] [command]\n", argc > 0 ? argv[0] : "fattool");
 		fprintf(stderr,
 			"\n"
 			"options:\n"
 			"  -help / --help : print this help\n"
-			"  -disk <file>   : specify disk file\n"
 			"  -partition\n"
 			"    -partition <number> : set partition number (1-4) to use\n"
 			"    -partition 0        : use whole disk as one partition (default)\n"

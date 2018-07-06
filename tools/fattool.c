@@ -30,13 +30,17 @@ int main(int argc, char* argv[]) {
 
 	int i;
 	if (argc >= 2) {
-		disk_name = argv[1];
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "-h") == 0) {
+			print_help = 1;
+		} else {
+			disk_name = argv[1];
+		}
 	} else {
 		cmd_error = 1;
 	}
 	for (i = 2; i < argc; i++) {
 		if (argv[i][0] == '-') {
-			if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-help") == 0) {
+			if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[1], "-h") == 0) {
 				print_help = 1;
 			} else if (strcmp(argv[i], "-partition") == 0) {
 				if (++i >= argc) cmd_error = 1; else {
@@ -72,8 +76,8 @@ int main(int argc, char* argv[]) {
 			"    -partition 0        : use whole disk as one partition (default)\n"
 			"    -partition list     : print partition list\n"
 			"\n"
-			"commands:\n"
-			"  not implemented\n"
+			"command:\n"
+			"  info : print FAT information\n"
 		);
 		return cmd_error ? 1 : 0;
 	}

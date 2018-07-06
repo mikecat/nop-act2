@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "disk.h"
+#include "number_io.h"
 
 int main(int argc, char* argv[]) {
 	char** command = NULL;
@@ -11,6 +12,9 @@ int main(int argc, char* argv[]) {
 	char* disk_name = NULL;
 	int partition = 0;
 	int partition_list = 0;
+
+	DISK* disk;
+	size_t sector_start, sector_num;
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -60,5 +64,73 @@ int main(int argc, char* argv[]) {
 		return cmd_error ? 1 : 0;
 	}
 
+	disk = open_disk(disk_name);
+	if (disk == NULL) {
+		fprintf(stderr, "failed to open disk %s\n", disk_name);
+		return 1;
+	}
+
+	if (partition_list) {
+		char data[512];
+		int i, found = 0;
+		size_t all_sector_num = get_disk_sector_num(disk);
+		if (!disk_read(disk, 0, 512, data)) {
+			fprintf(stderr, "MBR read failed\n");
+			if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+			return 1;
+		}
+		for (i = 0; i < 4; i++) {
+			unsigned char type = (unsigned char)data[446 + 16 * i + 4];
+			if (type != 0x00) {
+				unsigned int first, num;
+				const char* unit;
+				double divisor;
+				first = read_number(data + 446 + 16 * i + 8, 4);
+				num = read_number(data + 446 + 16 * i + 12, 4);
+				if (!found) {
+					puts("#  type  first sector  number of sector  size");
+					found = 1;
+				}
+				printf("%u  0x%02X  0x%08X    0x%08X        ", i + 1, type, first, num);
+				if (num < 2 * 1024) { unit = "KiB"; divisor = 2.0; }
+				else if (num < 2 * 1024 * 1024) { unit = "MiB"; divisor = 2.0 * 1024; }
+				else { unit = "GiB"; divisor = 2.0 * 1024 * 1024; }
+				printf("%6.1f %s", num / divisor, unit);
+				if (all_sector_num < first || all_sector_num - first < num) {
+					printf(" (out of the disk)");
+				}
+				printf("\n");
+			}
+		}
+		if (!found) {
+			printf("no non-empty partition information found.\n");
+		}
+	} else {
+		if (partition == 0) {
+			sector_start = 0;
+			sector_num = get_disk_sector_num(disk);
+		} else if (1 <= partition && partition <= 4) {
+			char data[512];
+			if (!disk_read(disk, 0, 512, data)) {
+				fprintf(stderr, "MBR read failed\n");
+				if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+				return 1;
+			}
+			sector_start = read_number(data + 446 + 16 * (partition - 1) + 8, 4);
+			sector_num = read_number(data + 446 + 16 * (partition - 1) + 12, 4);
+		} else {
+			fprintf(stderr, "invalid partition number %d\n", partition);
+			if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+			return 1;
+		}
+		/* todo: initialize FAT info, ... */
+		printf("sector_start = %u\nsector_num   = %u\n",
+			(unsigned int)sector_start, (unsigned int)sector_num);
+	}
+
+	if (!close_disk(disk)) {
+		fprintf(stderr, "failed to close disk!\n");
+		return 1;
+	}
 	return 0;
 }

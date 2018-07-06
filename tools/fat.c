@@ -107,9 +107,9 @@ int fat_close(FATINFO* fi) {
 	return 1;
 }
 
-void print_size(size_t size) {
+static void print_size(size_t size) {
 	if (size < 1024)
-		printf("%4u bytes", (unsigned int)size);
+		printf("%u bytes", (unsigned int)size);
 	else if (size < 1024.0 * 1024.0)
 		printf("%.1f KiB", (double)size / 1024.0);
 	else if (size < 1024.0 * 1024.0 * 1024.0)

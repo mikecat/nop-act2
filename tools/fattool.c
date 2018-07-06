@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
 	int partition_list = 0;
 
 	DISK* disk;
+	size_t disk_sector_num;
 	size_t sector_start, sector_num;
 
 	int i;
@@ -69,11 +70,16 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "failed to open disk %s\n", disk_name);
 		return 1;
 	}
+	disk_sector_num = get_disk_sector_num(disk);
+	if (disk_sector_num == 0) {
+		fprintf(stderr, "failed to get # of sectors in disk or image too small\n");
+		if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+		return 1;
+	}
 
 	if (partition_list) {
 		char data[512];
 		int i, found = 0;
-		size_t all_sector_num = get_disk_sector_num(disk);
 		if (!disk_read(disk, 0, 512, data)) {
 			fprintf(stderr, "MBR read failed\n");
 			if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
@@ -96,7 +102,7 @@ int main(int argc, char* argv[]) {
 				else if (num < 2 * 1024 * 1024) { unit = "MiB"; divisor = 2.0 * 1024; }
 				else { unit = "GiB"; divisor = 2.0 * 1024 * 1024; }
 				printf("%6.1f %s", num / divisor, unit);
-				if (all_sector_num < first || all_sector_num - first < num) {
+				if (disk_sector_num < first || disk_sector_num - first < num) {
 					printf(" (out of the disk)");
 				}
 				printf("\n");
@@ -118,6 +124,16 @@ int main(int argc, char* argv[]) {
 			}
 			sector_start = read_number(data + 446 + 16 * (partition - 1) + 8, 4);
 			sector_num = read_number(data + 446 + 16 * (partition - 1) + 12, 4);
+			if (data[446 + 16 * (partition - 1) + 4] == 0) {
+				fprintf(stderr, "the partition %d is empty.\n", partition);
+				if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+				return 1;
+			} else if (disk_sector_num < sector_start ||
+			disk_sector_num - sector_start < sector_num) {
+				fprintf(stderr, "the partition %d is out-of-disk.\n", partition);
+				if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
+				return 1;
+			}
 		} else {
 			fprintf(stderr, "invalid partition number %d\n", partition);
 			if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");

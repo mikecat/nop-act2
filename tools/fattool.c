@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 				else if (num < 2 * 1024 * 1024) { unit = "MiB"; divisor = 2.0 * 1024; }
 				else { unit = "GiB"; divisor = 2.0 * 1024 * 1024; }
 				printf("%6.1f %s", num / divisor, unit);
-				if (disk_sector_num < first || disk_sector_num - first < num) {
+				if (disk_sector_num <= first || disk_sector_num - first < num) {
 					printf(" (out of the disk)");
 				}
 				printf("\n");
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "the partition %d is empty.\n", partition);
 				if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
 				return 1;
-			} else if (disk_sector_num < sector_start ||
+			} else if (disk_sector_num <= sector_start ||
 			disk_sector_num - sector_start < sector_num) {
 				fprintf(stderr, "the partition %d is out-of-disk.\n", partition);
 				if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");

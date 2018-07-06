@@ -2,11 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include "disk.h"
+#include "fat.h"
 #include "number_io.h"
 
+void fat_command_process(FATINFO* fi, int argc, char* argv[]) {
+	if (argc >= 1) {
+		if (strcmp(argv[0], "info") == 0) {
+			fat_printinfo(fi);
+		}
+	} else {
+		puts("no command specified.\n");
+	}
+}
+
 int main(int argc, char* argv[]) {
-	char** command = NULL;
-	int command_num = -1;
+	char** command = argv + argc;
+	int command_num = 0;
 
 	int cmd_error = 0, print_help = 0;
 	char* disk_name = NULL;
@@ -114,6 +125,7 @@ int main(int argc, char* argv[]) {
 			printf("no non-empty partition information found.\n");
 		}
 	} else {
+		FATINFO* fi;
 		if (partition == 0) {
 			sector_start = 0;
 			sector_num = get_disk_sector_num(disk);
@@ -141,9 +153,11 @@ int main(int argc, char* argv[]) {
 			if (!close_disk(disk)) fprintf(stderr, "failed to close disk!\n");
 			return 1;
 		}
-		/* todo: initialize FAT info, ... */
-		printf("sector_start = %u\nsector_num   = %u\n",
-			(unsigned int)sector_start, (unsigned int)sector_num);
+		fi = fat_open(disk, sector_start, sector_num);
+		if (fi != NULL) {
+			fat_command_process(fi, command_num, command);
+			fat_close(fi);
+		}
 	}
 
 	if (!close_disk(disk)) {

@@ -34,6 +34,44 @@ struct fatinfo_t {
 	enum fattype_t fat_type;
 };
 
+struct fatfile_common_t {
+	/* implementation-defined data to handle the file */
+	void* data;
+	/* read size bytes to buffer and move file pointer forward */
+	ssize_t (*read)(void* data, void* buffer, size_t size);
+	/* write size bytes from buffer and move file pointer forward */
+	ssize_t (*write)(void* data, const void* buffer, size_t size);
+	/* get file size */
+	ssize_t (*size)(void* data);
+	/* move file pointer */
+	ssize_t (*seek)(void* data, ssize_t value, int is_absolute);
+	/* truncate file at current file pointer */
+	int (*truncate)(void* data);
+	/* close this file and destruct data */
+	int (*close)(void* data);
+
+	/* get file attributes */
+	int (*get_attr)(void* data);
+	/* set file attributes */
+	int (*set_addr)(void* data, int attr);
+	/* get last modify time */
+	time_t (*get_lmtime)(void* data);
+	/* set last modify time */
+	int (*set_lmtime)(void* data, time_t lmtime);
+
+	/* directory access need not be synchronized with byte access */
+	/* start to deal with contents of this file as directory */
+	int (*dir_begin)(void* data);
+	/* get next directory entry (name unneeded -> put NULL) */
+	int (*dir_next)(void* data, char* name, size_t name_max);
+	/* open previously got directory entry */
+	FATFILE* (*dir_openprev)(void* data, int usage);
+	/* open file in this directory */
+	FATFILE* (*dir_openfile)(void* data, const char* name, int usage);
+	/* end dealing with contents of this file as directory */
+	int (*dir_end)(void* data);
+};
+
 FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 	FATINFO* fi;
 	size_t disk_all_sector;

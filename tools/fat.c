@@ -1,76 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "disk.h"
-#include "fat.h"
+#include "fat_internal.h"
 #include "number_io.h"
-
-#define SECTOR_SIZE 512
-#define ONE_RDE_SIZE 32
-#define RDE_PER_SECTOR (SECTOR_SIZE / ONE_RDE_SIZE)
-
-enum fattype_t {
-	FAT12,
-	FAT16,
-	FAT32
-};
-
-struct fatinfo_t {
-	/* disk & partition info */
-	DISK* disk;
-	size_t disk_start_sector;
-	size_t disk_sector_num;
-	/* FAT info */
-	unsigned int sectors_per_cluster;
-	unsigned int reserved_sectors;
-	unsigned int number_of_fats;
-	unsigned int root_entries;
-	unsigned int total_sectors;
-	unsigned int sectors_per_fat;
-	/* FAT info cache */
-	size_t first_fat_sector;
-	size_t first_rde_sector;
-	size_t first_data_sector;
-	size_t data_cluster_num;
-	enum fattype_t fat_type;
-};
-
-struct fatfile_common_t {
-	/* implementation-defined data to handle the file */
-	void* data;
-	/* read size bytes to buffer and move file pointer forward */
-	ssize_t (*read)(void* data, void* buffer, size_t size);
-	/* write size bytes from buffer and move file pointer forward */
-	ssize_t (*write)(void* data, const void* buffer, size_t size);
-	/* get file size */
-	ssize_t (*size)(void* data);
-	/* move file pointer */
-	ssize_t (*seek)(void* data, ssize_t value, int is_absolute);
-	/* truncate file at current file pointer */
-	int (*truncate)(void* data);
-	/* close this file and destruct data */
-	int (*close)(void* data);
-
-	/* get file attributes */
-	int (*get_attr)(void* data);
-	/* set file attributes */
-	int (*set_addr)(void* data, int attr);
-	/* get last modify time */
-	time_t (*get_lmtime)(void* data);
-	/* set last modify time */
-	int (*set_lmtime)(void* data, time_t lmtime);
-
-	/* directory access need not be synchronized with byte access */
-	/* start to deal with contents of this file as directory */
-	int (*dir_begin)(void* data);
-	/* get next directory entry (name unneeded -> put NULL) */
-	int (*dir_next)(void* data, char* name, size_t name_max);
-	/* open previously got directory entry */
-	FATFILE* (*dir_openprev)(void* data, int usage);
-	/* open file in this directory */
-	FATFILE* (*dir_openfile)(void* data, const char* name, int usage);
-	/* end dealing with contents of this file as directory */
-	int (*dir_end)(void* data);
-};
 
 FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 	FATINFO* fi;
@@ -192,4 +124,91 @@ int fat_printinfo(FATINFO* fi) {
 	printf("data first sector      : 0x%zX (offset: 0x%zX)\n", fi->first_data_sector,
 		fi->first_data_sector - fi->disk_start_sector);
 	return 1;
+}
+
+FATFILE* fat_openfile(DISK* disk, FATFILE* curdir, const char* path, int usage) {
+	/* not implemented */
+	(void)disk;
+	(void)curdir;
+	(void)path;
+	(void)usage;
+	return NULL;
+}
+
+int fat_closefile(FATFILE* ff) {
+	if (ff != NULL) {
+		if (ff->close != NULL && !ff->close(ff->data)) return 0;
+		free(ff);
+	}
+	return 1;
+}
+
+ssize_t fat_readfile(FATFILE* ff, void* buffer, size_t size) {
+	if (ff == NULL || ff->read == NULL) return -1;
+	return ff->read(ff->data, buffer, size);
+}
+
+ssize_t fat_writefile(FATFILE* ff, const void* buffer, size_t size) {
+	if (ff == NULL || ff->write == NULL) return -1;
+	return ff->write(ff->data, buffer, size);
+}
+
+ssize_t fat_filesize(FATFILE* ff) {
+	if (ff == NULL || ff->size == NULL) return -1;
+	return ff->size(ff->data);
+}
+
+ssize_t fat_seekfile(FATFILE* ff, ssize_t value, int is_absolute) {
+	if (ff == NULL || ff->seek == NULL) return -1;
+	return ff->seek(ff->data, value, is_absolute);
+}
+
+int fat_truncatefile(FATFILE* ff) {
+	if (ff == NULL || ff->truncate == NULL) return 0;
+	return ff->truncate(ff->data);
+}
+
+int fat_getfileattr(FATFILE* ff) {
+	if (ff == NULL || ff->get_attr == NULL) return -1;
+	return ff->get_attr(ff->data);
+}
+
+int fat_setfileattr(FATFILE* ff, int attr) {
+	if (ff == NULL || ff->set_attr == NULL) return 0;
+	return ff->set_attr(ff->data, attr);
+}
+
+time_t fat_getfilelmtime(FATFILE* ff) {
+	if (ff == NULL || ff->get_lmtime == NULL) return 0;
+	return ff->get_lmtime(ff->data);
+}
+
+int fat_setfilelmtime(FATFILE* ff, time_t lmtime) {
+	if (ff == NULL || ff->set_lmtime == NULL) return 0;
+	return ff->set_lmtime(ff->data, lmtime);
+}
+
+int fat_dirbegin(FATFILE* ff) {
+	if (ff == NULL || ff->dir_begin == NULL) return 0;
+	return ff->dir_begin(ff->data);
+}
+
+int fat_dirnext(FATFILE* ff, char* name, size_t name_max) {
+	if (ff == NULL || ff->dir_next == NULL) return 0;
+	return ff->dir_next(ff->data, name, name_max);
+}
+
+FATFILE* fat_diropenprev(FATFILE* ff, int usage) {
+	if (ff == NULL || ff->dir_openprev == NULL) return NULL;
+	return ff->dir_openprev(ff->data, usage);
+}
+
+FATFILE* fat_diropenfile(FATFILE* ff, const char* name, int usage) {
+	if (ff == NULL || ff->dir_openfile == NULL) return NULL;
+	return ff->dir_openfile(ff->data, name, usage);
+}
+
+int fat_dirend(FATFILE* ff) {
+	if (ff == NULL || ff->dir_end == NULL) return 0;
+	return ff->dir_end(ff->data);
 }

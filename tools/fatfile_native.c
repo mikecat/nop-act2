@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -93,11 +94,13 @@ static time_t native_get_lmtime(void* data) {
 
 static int native_set_lmtime(void* data, time_t lmtime) {
 	struct native_file_t* nf = (struct native_file_t*)data;
-	struct timespec times[2];
+	struct stat st;
+	struct timeval times[2];
 	if (nf == NULL) return 0;
-	times[0].tv_sec = 0; times[0].tv_nsec = UTIME_OMIT;
-	times[1].tv_sec = lmtime; times[1].tv_nsec = 0;
-	return futimens(nf->fd, times) == 0;
+	if (fstat(nf->fd, &st) == -1) return 0;
+	times[0].tv_sec = st.st_atime; times[0].tv_usec = 0;
+	times[1].tv_sec = lmtime; times[1].tv_usec = 0;
+	return futimes(nf->fd, times) == 0;
 }
 
 static int native_dir_begin(void* data) {

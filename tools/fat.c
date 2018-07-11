@@ -128,11 +128,11 @@ int fat_printinfo(FATINFO* fi) {
 	return 1;
 }
 
-FATFILE* fat_openfile(DISK* disk, FATFILE* curdir, const char* path, int usage) {
+FATFILE* fat_openfile(FATINFO* fi, FATFILE* curdir, const char* path, int usage) {
 	if (strncmp(path, "disk:", 5) == 0) {
 		/* open file in disk image */
 		/* not implemented */
-		(void)disk;
+		(void)fi;
 		(void)curdir;
 		(void)path;
 		(void)usage;

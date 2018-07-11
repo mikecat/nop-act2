@@ -25,7 +25,7 @@ int fat_close(FATINFO* fi);
 int fat_printinfo(FATINFO* fi);
 
 /* return NULL if fails */
-FATFILE* fat_openfile(DISK* disk, FATFILE* curdir, const char* path, int usage);
+FATFILE* fat_openfile(FATINFO* fi, FATFILE* curdir, const char* path, int usage);
 /* return nonzero if success, return zero if fails */
 int fat_closefile(FATFILE* ff);
 /* return size read if success, return -1 if fails */

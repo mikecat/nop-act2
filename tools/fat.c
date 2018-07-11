@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "disk.h"
 #include "fat_internal.h"
 #include "number_io.h"
+#include "fatfile_native.h"
 
 FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 	FATINFO* fi;
@@ -127,12 +129,18 @@ int fat_printinfo(FATINFO* fi) {
 }
 
 FATFILE* fat_openfile(DISK* disk, FATFILE* curdir, const char* path, int usage) {
-	/* not implemented */
-	(void)disk;
-	(void)curdir;
-	(void)path;
-	(void)usage;
-	return NULL;
+	if (strncmp(path, "disk:", 5) == 0) {
+		/* open file in disk image */
+		/* not implemented */
+		(void)disk;
+		(void)curdir;
+		(void)path;
+		(void)usage;
+		return NULL;
+	} else {
+		/* open file in native file system */
+		return fatfile_opennative(path, usage);
+	}
 }
 
 int fat_closefile(FATFILE* ff) {

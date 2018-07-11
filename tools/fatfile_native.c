@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "fatfile_native.h"
 #include "fat_internal.h"
 
 struct native_file_t {

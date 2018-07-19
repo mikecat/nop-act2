@@ -1,0 +1,8 @@
+#ifndef FATFILE_RDE_H_GUARD_30030030_6568_455D_B4D2_F35556633A05
+#define FATFILE_RDE_H_GUARD_30030030_6568_455D_B4D2_F35556633A05
+
+#include "fat.h"
+
+FATFILE* fatfile_openrde(FATINFO* fi, int usage);
+
+#endif

@@ -18,7 +18,7 @@ FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 	if (disk_all_sector <= start_sector || disk_all_sector - start_sector < sector_num) {
 		fprintf(stderr, "invald disk range\n"); return NULL;
 	}
-	if (!disk_read(disk, start_sector * 512, 512, bpb)) {
+	if (!disk_read2(disk, start_sector, 0, 512, bpb)) {
 		fprintf(stderr, "BPB read failed\n"); return NULL;
 	}
 	if ((bytes_per_sector = read_number(bpb + 11, 2)) != 512) {

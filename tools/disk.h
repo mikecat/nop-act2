@@ -15,5 +15,9 @@ size_t get_disk_sector_num(DISK* disk);
 int disk_read(DISK* disk, size_t offset, size_t len, void* data);
 /* success: return nonzero, fail: return zero */
 int disk_write(DISK* disk, size_t offset, size_t len, const void* data);
+/* success: return nonzero, fail: return zero */
+int disk_read2(DISK* disk, size_t start_sector, size_t offset, size_t len, void* data);
+/* success: return nonzero, fail: return zero */
+int disk_write2(DISK* disk, size_t start_sector, size_t offset, size_t len, const void* data);
 
 #endif

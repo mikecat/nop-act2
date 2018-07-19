@@ -208,3 +208,10 @@ int disk_write(DISK* disk, size_t offset, size_t len, const void* data) {
 	}
 	return 1;
 }
+int disk_read2(DISK* disk, size_t start_sector, size_t offset, size_t len, void* data) {
+	return disk_read(disk, start_sector * SECTOR_SIZE + offset, len, data);
+}
+
+int disk_write2(DISK* disk, size_t start_sector, size_t offset, size_t len, const void* data) {
+	return disk_write(disk, start_sector * SECTOR_SIZE + offset, len, data);
+}

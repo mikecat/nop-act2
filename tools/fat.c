@@ -5,6 +5,7 @@
 #include "fat_internal.h"
 #include "number_io.h"
 #include "fatfile_native.h"
+#include "fatfile_rde.h"
 
 FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 	FATINFO* fi;
@@ -129,14 +130,52 @@ int fat_printinfo(FATINFO* fi) {
 }
 
 FATFILE* fat_openfile(FATINFO* fi, FATFILE* curdir, const char* path, int usage) {
+	if (path == NULL) return NULL;
 	if (strncmp(path, "disk:", 5) == 0) {
 		/* open file in disk image */
-		/* not implemented */
-		(void)fi;
-		(void)curdir;
-		(void)path;
-		(void)usage;
-		return NULL;
+		FATFILE* cur = curdir;
+		size_t cur_start = 5, i;
+		char *fname_buf = malloc(strlen(path) + 1);
+		if (fname_buf == NULL) return NULL;
+		for (i = 5; ; i++) {
+			if (path[i] == '/' || path[i] == '\\' || path[i] == '\0') {
+				if (cur_start == i) {
+					cur_start = i + 1;
+				} else {
+					/* open next directory or file */
+					FATFILE* next;
+					if (cur == NULL) {
+						cur = fatfile_openrde(fi, FATFILE_WILL_READ);
+						if (cur == NULL) {
+							free(fname_buf);
+							return NULL;
+						}
+					}
+					memcpy(fname_buf, path + cur_start, i - cur_start);
+					fname_buf[i - cur_start] = '\0';
+					next = fat_diropenfile(cur, fname_buf, path[i] == '\0' ? usage : FATFILE_WILL_READ);
+					if (cur != curdir) fat_closefile(cur);
+					if (next == NULL) {
+						free(fname_buf);
+						return NULL;
+					}
+					cur = next;
+				}
+				if (path[i] == '\0') break;
+			}
+		}
+		if (cur_start >= i) {
+			/* end with directory separator, or the path is empty */
+			if (cur == NULL) {
+				cur = fatfile_openrde(fi, usage);
+			} else {
+				FATFILE* next = fat_diropenfile(cur, ".", usage);
+				if (cur != curdir) fat_closefile(cur);
+				cur = next;
+			}
+		}
+		free(fname_buf);
+		return cur;
 	} else {
 		/* open file in native file system */
 		return fatfile_opennative(path, usage);

@@ -27,6 +27,7 @@ FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num) {
 		return NULL;
 	}
 	if ((fi = malloc(sizeof(*fi))) == NULL) { perror("malloc"); return NULL; }
+	fi->disk = disk;
 	fi->disk_start_sector = start_sector;
 	fi->disk_sector_num = sector_num;
 	/* read BPB */

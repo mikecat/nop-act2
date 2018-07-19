@@ -2,6 +2,7 @@
 #define FAT_H_GUARD_5472980D_3181_497F_8800_678ACCC59F87
 
 #include <time.h>
+#include <sys/types.h>
 #include "disk.h"
 
 typedef struct fatinfo_t FATINFO;

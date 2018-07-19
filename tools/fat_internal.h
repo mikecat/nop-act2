@@ -46,6 +46,8 @@ struct fatfile_common_t {
 	ssize_t (*seek)(void* data, ssize_t value, int is_absolute);
 	/* truncate file at current file pointer */
 	int (*truncate)(void* data);
+	/* delete this file */
+	int (*remove)(void* data);
 	/* close this file and destruct data */
 	int (*close)(void* data);
 

@@ -38,6 +38,8 @@ ssize_t fat_filesize(FATFILE* ff);
 ssize_t fat_seekfile(FATFILE* ff, ssize_t value, int is_absolute);
 /* return nonzero if success, return zero if fails */
 int fat_truncatefile(FATFILE* ff);
+/* return nonzero if success, return zero if fails */
+int fat_deletefile(FATFILE* ff);
 /* return -1 if fails */
 int fat_getfileattr(FATFILE* ff);
 /* return nonzero if success, return zero if fails */

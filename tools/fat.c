@@ -176,6 +176,11 @@ int fat_truncatefile(FATFILE* ff) {
 	return ff->truncate(ff->data);
 }
 
+int fat_deletefile(FATFILE* ff) {
+	if (ff == NULL || ff->remove == NULL) return 0;
+	return ff->remove(ff->data);
+}
+
 int fat_getfileattr(FATFILE* ff) {
 	if (ff == NULL || ff->get_attr == NULL) return -1;
 	return ff->get_attr(ff->data);

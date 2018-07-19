@@ -51,6 +51,11 @@ static int native_truncate(void* data) {
 	return ftruncate(nf->fd, length) == 0;
 }
 
+static int native_remove(void* data) {
+	(void)data;
+	return 0;
+}
+
 static int native_close(void* data) {
 	struct native_file_t* nf = (struct native_file_t*)data;
 	if (nf == NULL) return 0;
@@ -205,6 +210,7 @@ FATFILE* fatfile_opennative_common(int dirfd, const char* path, int usage) {
 	ff->size = native_size;
 	ff->seek = native_seek;
 	ff->truncate = native_truncate;
+	ff->remove = native_remove;
 	ff->close = native_close;
 	ff->get_attr = native_get_attr;
 	ff->set_attr = native_set_attr;

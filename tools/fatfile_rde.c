@@ -121,7 +121,6 @@ static int rde_dir_begin(void* data) {
 
 static int rde_dir_next(void* data, char* name, size_t name_max) {
 	struct rde_file_t* rf = (struct rde_file_t*)data;
-	struct dirent* dirent;
 	if (rf == NULL || !rf->dirmode) return 0;
 	if (!(rf->usage & FATFILE_WILL_READ)) return 0;
 	while (rf->dir_fp + ONE_RDE_SIZE <= rf->size) {
@@ -130,19 +129,19 @@ static int rde_dir_next(void* data, char* name, size_t name_max) {
 			if (rde[0] == 0x00) {
 				/* end of the table */
 				break;
-			} else if ((unsigned char)rde[0] != 0xe5) {
-				/* not deleted */
+			} else if ((unsigned char)rde[0] != 0xe5 && !(rde[11] & 0x08)) {
+				/* not deleted and not volume lavel */
 				if (name != NULL && name_max > 0) {
 					unsigned int i, name_pos = 0;
 					for (i = 0; i < 11; i++) {
 						if (name_pos < name_max) {
-							if (rde[i] == '\0') {
+							if (rde[i] == ' ') {
 								if (i < 8) i = 7; else break;
 							} else {
-								name[name_pos++] = rde[i];
+								if (i == 8) name[name_pos++] = '.';
+								if (name_pos < name_max) name[name_pos++] = rde[i];
 							}
 						}
-						if (i == 7 && name_pos < name_max) name[name_pos++] = '.';
 					}
 					if (name_pos >= name_max) name_pos = name_max - 1;
 					name[name_pos] = '\0';

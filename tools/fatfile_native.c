@@ -15,6 +15,9 @@ struct native_file_t {
 	int dirmode;
 	DIR* dir;
 	char prev_name[2048];
+	/* for use in unlinkat */
+	char* my_path;
+	int my_dir_fd;
 };
 
 static ssize_t native_read(void* data, void* buffer, size_t size) {
@@ -51,9 +54,54 @@ static int native_truncate(void* data) {
 	return ftruncate(nf->fd, length) == 0;
 }
 
+static int native_remove_recur(int dir_fd, const char* path) {
+	struct stat st;
+	if (fstatat(dir_fd, path, &st, 0) == -1) return 0;
+	if ((st.st_mode & S_IFMT) == S_IFDIR) {
+		int fd = openat(dir_fd, path, O_RDWR | O_DIRECTORY), fd2;
+		DIR* dir;
+		if (fd == -1) return 0;
+		if ((fd2 = dup(fd)) == -1) {
+			close(fd);
+			return 0;
+		}
+		if ((dir = fdopendir(fd)) == NULL) {
+			int e = errno; close(fd); close(fd2); errno = e;
+			return 0;
+		}
+		for (;;) {
+			struct dirent *de;
+			errno = 0;
+			de = readdir(dir);
+			if (de == NULL) {
+				if (errno != 0) {
+					/* error */
+					int e = errno; closedir(dir); close(fd2); errno = e;
+					return 0;
+				} else {
+					/* end of directory stream */
+					break;
+				}
+			}
+			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0) {
+				if (!native_remove_recur(fd2, de->d_name)) {
+					int e = errno; closedir(dir); close(fd2); errno = e;
+					return 0;
+				}
+			}
+		}
+		closedir(dir);
+		close(fd2);
+		return unlinkat(dir_fd, path, AT_REMOVEDIR) == 0;
+	} else {
+		return unlinkat(dir_fd, path, 0) == 0;
+	}
+}
+
 static int native_remove(void* data) {
-	(void)data;
-	return 0;
+	struct native_file_t* nf = (struct native_file_t*)data;
+	if (nf == NULL) return 0;
+	return native_remove_recur(nf->my_dir_fd, nf->my_path);
 }
 
 static int native_close(void* data) {
@@ -63,6 +111,8 @@ static int native_close(void* data) {
 		if (closedir(nf->dir) == -1) return 0;
 	}
 	if (close(nf->fd) == -1) return 0;
+	free(nf->my_path);
+	close(nf->my_dir_fd);
 	free(data);
 	return 1;
 }
@@ -191,8 +241,18 @@ FATFILE* fatfile_opennative_common(int dirfd, const char* path, int usage) {
 		free(nf); free(ff);
 		return NULL;
 	}
-	if ((nf->fd = (dirfd == -1 ? open(path, open_flag, 0644) : openat(dirfd, path, open_flag, 0644))) == -1) {
-		int e = errno; free(nf); free(ff); errno = e;
+	if ((nf->my_path = malloc(strlen(path) + 1)) == NULL) {
+		free(nf); free(ff);
+		return NULL;
+	}
+	strcpy(nf->my_path, path);
+	nf->my_dir_fd = (dirfd == -1 ? open(".", O_RDONLY) : dup(dirfd));
+	if (nf->my_dir_fd == -1) {
+		free(nf->my_path); free(nf); free(ff);
+		return NULL;
+	}
+	if ((nf->fd = openat(nf->my_dir_fd, path, open_flag, 0644)) == -1) {
+		int e = errno; close(nf->my_dir_fd); free(nf->my_path); free(nf); free(ff); errno = e;
 		return NULL;
 	}
 	nf->dirmode = 0;

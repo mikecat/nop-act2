@@ -223,6 +223,7 @@ FATFILE* fatfile_opennative_common(int dirfd, const char* path, int usage) {
 	int open_flag = 0;
 	struct native_file_t* nf = malloc(sizeof(*nf));
 	FATFILE* ff = malloc(sizeof(*ff));
+	struct stat st;
 	if (nf == NULL || ff == NULL) {
 		int e = errno; free(nf); free(ff); errno = e;
 		return NULL;
@@ -250,6 +251,16 @@ FATFILE* fatfile_opennative_common(int dirfd, const char* path, int usage) {
 	if (nf->my_dir_fd == -1) {
 		free(nf->my_path); free(nf); free(ff);
 		return NULL;
+	}
+	if (fstatat(nf->my_dir_fd, path, &st, 0) == -1) {
+		if (errno != ENOENT) {
+			int e = errno; close(nf->my_dir_fd); free(nf->my_path); free(nf); free(ff); errno = e;
+			return NULL;
+		}
+	} else {
+		if ((st.st_mode & S_IFMT) == S_IFDIR) {
+			open_flag = O_RDONLY;
+		}
 	}
 	if ((nf->fd = openat(nf->my_dir_fd, path, open_flag, 0644)) == -1) {
 		int e = errno; close(nf->my_dir_fd); free(nf->my_path); free(nf); free(ff); errno = e;

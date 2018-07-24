@@ -28,7 +28,7 @@ static void process_ls(FATINFO* fi, int argc, char* argv[]) {
 					fprintf(stderr, "fat_dirbegin() failed\n");
 				}
 			} else {
-				printf("%s\n", argv[1]);
+				printf("%s\n", argv[0]);
 			}
 			fat_closefile(ff);
 		}

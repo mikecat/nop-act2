@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 		}
 		fi = fat_open(disk, sector_start, sector_num);
 		if (fi != NULL) {
-			fat_process_command(fi, command_num, command);
+			fat_process_command(fi, NULL, command_num, command);
 			fat_close(fi);
 		}
 	}

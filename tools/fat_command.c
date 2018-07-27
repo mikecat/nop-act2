@@ -2,15 +2,16 @@
 #include <string.h>
 #include "fat_command.h"
 
-static void process_info(FATINFO* fi, int argc, char* argv[]) {
+static void process_info(FATINFO* fi, FATFILE* curdir, int argc, char* argv[]) {
+	(void)curdir;
 	(void)argc;
 	(void)argv;
 	fat_printinfo(fi);
 }
 
-static void process_ls(FATINFO* fi, int argc, char* argv[]) {
+static void process_ls(FATINFO* fi, FATFILE* curdir, int argc, char* argv[]) {
 	if (argc >= 1) {
-		FATFILE* ff = fat_openfile(fi, NULL, argv[0], FATFILE_WILL_READ);
+		FATFILE* ff = fat_openfile(fi, curdir, argv[0], FATFILE_WILL_READ);
 		if (ff == NULL) {
 			fprintf(stderr, "failed to open %s\n", argv[0]);
 		} else {
@@ -35,12 +36,12 @@ static void process_ls(FATINFO* fi, int argc, char* argv[]) {
 	}
 }
 
-void fat_process_command(FATINFO* fi, int argc, char* argv[]) {
+void fat_process_command(FATINFO* fi, FATFILE* curdir, int argc, char* argv[]) {
 	if (argc >= 1) {
 		if (strcmp(argv[0], "info") == 0) {
-			process_info(fi, argc - 1, argv + 1);
+			process_info(fi, curdir, argc - 1, argv + 1);
 		} else if (strcmp(argv[0], "ls") == 0) {
-			process_ls(fi, argc - 1, argv + 1);
+			process_ls(fi, curdir, argc - 1, argv + 1);
 		}
 	} else {
 		puts("no command specified.\n");

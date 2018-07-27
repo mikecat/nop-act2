@@ -3,6 +3,6 @@
 
 #include "fat.h"
 
-void fat_process_command(FATINFO* fi, int argc, char* argv[]);
+void fat_process_command(FATINFO* fi, FATFILE* curdir, int argc, char* argv[]);
 
 #endif

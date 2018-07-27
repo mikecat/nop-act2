@@ -17,6 +17,7 @@ typedef struct fatfile_common_t FATFILE;
 /* file usage flags */
 #define FATFILE_WILL_READ  1
 #define FATFILE_WILL_WRITE 2
+#define FATFILE_CREATE_DIR 4
 
 /* return NULL if fails */
 FATINFO* fat_open(DISK* disk, size_t start_sector, size_t sector_num);

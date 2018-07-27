@@ -256,8 +256,17 @@ FATFILE* fatfile_opennative_common(int dirfd, const char* path, int usage) {
 		if (errno != ENOENT) {
 			int e = errno; close(nf->my_dir_fd); free(nf->my_path); free(nf); free(ff); errno = e;
 			return NULL;
+		} else {
+			/* create directory if requested and not exists */
+			if ((usage & FATFILE_CREATE_DIR) && (usage & FATFILE_WILL_WRITE)) {
+				if (mkdirat(nf->my_dir_fd, path, 0644) == -1) {
+					int e = errno; close(nf->my_dir_fd); free(nf->my_path); free(nf); free(ff); errno = e;
+					return NULL;
+				}
+			}
 		}
 	} else {
+		/* avoid try to write to directories */
 		if ((st.st_mode & S_IFMT) == S_IFDIR) {
 			open_flag = O_RDONLY;
 		}

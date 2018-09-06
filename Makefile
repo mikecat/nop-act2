@@ -34,10 +34,12 @@ jos: .jos-built
 
 .native-built: $(NATIVE_OBJDIR)/bootia32.efi
 	cp $^ $(TARGET)
+	perl buffer_validator.pl $(TARGET) src/memory.c
 	@touch $@
 
 .jos-built: $(JOS_OBJDIR)/bootia32.efi
 	cp $^ $(TARGET)
+	perl buffer_validator.pl $(TARGET) src/memory.c
 	@touch $@
 
 $(NATIVE_OBJDIR)/bootia32.efi: $(addprefix $(NATIVE_OBJDIR)/,$(OBJS))
